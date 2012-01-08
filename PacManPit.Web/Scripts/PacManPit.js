@@ -2,8 +2,8 @@ registerNamespace("PacMan.App");
 registerNamespace("PacMan.Maze");
 registerNamespace("PacMan.Dom");
 DOM.domReady(function () {
-    var x = 105;
-    var y = 181;
+    var x = ((13 * 8) - 3);
+    var y = ((23 * 8) - 3);
     var div = document.getElementById("maindiv");
     var ppos = document.getElementById("ppos");
     var pimg = Pit.FSharp.Core.Operators.op_PipeRight(document.getElementById("pimg"))(function (arg00) {

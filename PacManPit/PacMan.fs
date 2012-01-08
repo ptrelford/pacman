@@ -11,8 +11,9 @@ module App =
     [<DomEntryPoint>]
     [<Js>]
     let main() =      
-        let x = ref 105
-        let y = ref 181
+        
+        let x = ref (13 * 8 - 3)
+        let y = ref (23 * 8 - 3)
         let div = document.GetElementById("maindiv")
         let ppos = document.GetElementById("ppos")
         let pimg = document.GetElementById("pimg") |> Dom.DomImage.Of
