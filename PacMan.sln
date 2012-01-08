@@ -1,0 +1,26 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PacManPit.Web", "PacManPit.Web\PacManPit.Web.csproj", "{AA5A50C1-CDCA-4856-BA29-CF1CDF3C5D4D}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "PacManPit", "PacManPit\PacManPit.fsproj", "{C6E78967-A993-4CE4-8AEB-B5BE5269D1EE}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{AA5A50C1-CDCA-4856-BA29-CF1CDF3C5D4D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AA5A50C1-CDCA-4856-BA29-CF1CDF3C5D4D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AA5A50C1-CDCA-4856-BA29-CF1CDF3C5D4D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AA5A50C1-CDCA-4856-BA29-CF1CDF3C5D4D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C6E78967-A993-4CE4-8AEB-B5BE5269D1EE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C6E78967-A993-4CE4-8AEB-B5BE5269D1EE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C6E78967-A993-4CE4-8AEB-B5BE5269D1EE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C6E78967-A993-4CE4-8AEB-B5BE5269D1EE}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
