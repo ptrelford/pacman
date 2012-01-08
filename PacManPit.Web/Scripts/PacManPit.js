@@ -2,8 +2,61 @@ registerNamespace("PacMan.App");
 registerNamespace("PacMan.Maze");
 registerNamespace("PacMan.Dom");
 DOM.domReady(function () {
+    var x = 105;
+    var y = 181;
     var div = document.getElementById("maindiv");
-    return PacMan.Maze.drawMaze(div);
+    var ppos = document.getElementById("ppos");
+    var pimg = Pit.FSharp.Core.Operators.op_PipeRight(document.getElementById("pimg"))(function (arg00) {
+        return arg00;
+    });
+    PacMan.Maze.drawMaze(div);
+    return Pit.FSharp.Core.Operators.op_PipeRight(Pit.FSharp.Core.Operators.op_PipeRight(div)(function (el) {
+        return Pit.Dom.Event.keydown(el);
+    }))(function (sourceEvent) {
+        return Pit.FSharp.Control.EventModule.Add(function (e) {
+            var s = String.fromCharCode(e.keyCode);
+            var c = s.get_Chars(0);
+            var turn = function (d) {
+                return PacMan.Dom.op_DynamicAssignment(pimg)("src")((("Images/p" + d) + ".png"));
+            };
+            (function (thisObject) {
+                if (c == "Z") {
+                    turn("l");
+                    x = (x - 1);
+                    return ppos.style.left = (x.ToString() + "px");
+                } else {
+                    return null;
+                }
+            })(this);
+            (function (thisObject) {
+                if (c == "X") {
+                    turn("r");
+                    x = (x + 1);
+                    return ppos.style.left = (x.ToString() + "px");
+                } else {
+                    return null;
+                }
+            })(this);
+            (function (thisObject) {
+                if (c == "Q") {
+                    turn("u");
+                    y = (y - 1);
+                    return ppos.style.top = (y.ToString() + "px");
+                } else {
+                    return null;
+                }
+            })(this);
+            return (function (thisObject) {
+                if (c == "A") {
+                    turn("d");
+                    y = (y + 1);
+                    return ppos.style.top = (y.ToString() + "px");
+                } else {
+                    return null;
+                }
+            })(this);
+        })(sourceEvent);
+    });
 });
 PacMan.Maze.get_maze = "/------------7/------------7,|............|!............|,|./__7./___7.|!./___7./__7.|,|o|  !.|   !.|!.|   !.|  !o|,|.L--J.L---J.LJ.L---J.L--J.|,|..........................|,|./__7./7./______7./7./__7.|,|.L--J.|!.L--7/--J.|!.L--J.|,|......|!....|!....|!......|,L____7.|L__7 |! /__J!./____J,#####!.|/--J LJ L--7!.|#####,#####!.|!          |!.|#####,#####!.|! /__==__7 |!.|#####,-----J.LJ |      ! LJ.L-----,##### .   |      !   . #####,_____7./7 |      ! /7./_____,#####!.|! L______J |!.|#####,#####!.|!          |!.|#####,#####!.|! /______7 |!.|#####,/----J.LJ L--7/--J LJ.L----7,|............|!............|,|./__7./___7.|!./___7./__7.|,|.L-7!.L---J.LJ.L---J.|/-J.|,|o..|!.......<>.......|!..o|,L_7.|!./7./______7./7.|!./_J,/-J.LJ.|!.L--7/--J.|!.LJ.L-7,|......|!....|!....|!......|,|./____JL__7.|!./__JL____7.|,|.L--------J.LJ.L--------J.|,|..........................|,L==========================J";
 PacMan.Maze.toTile = function (c) {
@@ -86,7 +139,8 @@ PacMan.Maze.drawMaze = function (div) {
                     var c = line.get_Chars(x);
                     var tile = PacMan.Maze.toTile(c);
                     var style = (((("position:absolute;left:" + (x * 8).ToString()) + "px;top:") + (y * 8).ToString()) + "px");
-                    var img = Pit.FSharp.Core.Operators.op_PipeRight(PacMan.Dom.tag("img")(new Pit.FSharp.Collections.FSharpList1.Cons(PacMan.Dom.op_AtEquals("src")((("Images/" + tile) + ".png")), new Pit.FSharp.Collections.FSharpList1.Cons(PacMan.Dom.op_AtEquals("style")(style), new Pit.FSharp.Collections.FSharpList1.Cons(PacMan.Dom.op_AtEquals("width")("8px"), new Pit.FSharp.Collections.FSharpList1.Cons(PacMan.Dom.op_AtEquals("height")("8px"), new Pit.FSharp.Collections.FSharpList1.Empty()))))))(function (arg00) {
+                    var path = (("Images/" + tile) + ".png");
+                    var img = Pit.FSharp.Core.Operators.op_PipeRight(PacMan.Dom.tag("img")(new Pit.FSharp.Collections.FSharpList1.Cons(PacMan.Dom.op_AtEquals("src")(path), new Pit.FSharp.Collections.FSharpList1.Cons(PacMan.Dom.op_AtEquals("style")(style), new Pit.FSharp.Collections.FSharpList1.Empty()))))(function (arg00) {
                         return arg00;
                     });
                     div.appendChild(img);
@@ -135,5 +189,17 @@ PacMan.Dom.tag = function (name) {
             }
         })(this);
         return el;
+    };
+};
+PacMan.Dom.op_Dynamic = function (el) {
+    return function (name) {
+        return el.getAttribute(name);
+    };
+};
+PacMan.Dom.op_DynamicAssignment = function (el) {
+    return function (name) {
+        return function (value) {
+            return el.setAttribute(name, value);
+        };
     };
 };

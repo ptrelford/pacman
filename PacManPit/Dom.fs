@@ -12,6 +12,9 @@ module Dom =
         let el = document.CreateElement(name)
         for a in attributes do el.SetAttribute(a.Name,a.Value.ToString())
         el
+    let [<Js>] (?) (el:DomElement) name = el.GetAttribute(name)
+    let [<Js>] (?<-) (el:DomElement) name value = el.SetAttribute(name,value)
+
 
 
 

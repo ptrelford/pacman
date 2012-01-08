@@ -63,6 +63,6 @@ L==========================J"
                 let c = line.Chars(x)
                 let tile = toTile c                                    
                 let style = "position:absolute;left:"+(x*8).ToString()+"px;top:"+(y*8).ToString()+"px"
-                let img = tag "img" ["src"@="Images/"+tile+".png";"style"@=style;"width"@="8px";"height"@="8px"] |> Dom.DomImage.Of
+                let path = "Images/"+tile+".png"
+                let img = tag "img" ["src"@=path;"style"@=style] |> Dom.DomImage.Of
                 div.AppendChild img
-
