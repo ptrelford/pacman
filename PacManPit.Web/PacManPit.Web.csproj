@@ -53,6 +53,22 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="ClientBin\Pit.Runtime.xap" />
+    <Content Include="Images\bl.png" />
+    <Content Include="Images\blank.png" />
+    <Content Include="Images\bottom.png" />
+    <Content Include="Images\br.png" />
+    <Content Include="Images\dot.png" />
+    <Content Include="Images\left.png" />
+    <Content Include="Images\p.png" />
+    <Content Include="Images\pd.png" />
+    <Content Include="Images\pill.png" />
+    <Content Include="Images\pl.png" />
+    <Content Include="Images\pr.png" />
+    <Content Include="Images\pu.png" />
+    <Content Include="Images\right.png" />
+    <Content Include="Images\tl.png" />
+    <Content Include="Images\top.png" />
+    <Content Include="Images\tr.png" />
     <Content Include="PacManPit.htm" />
     <Content Include="Scripts\PacManPit.js" />
     <Content Include="Scripts\PacManPit.Silverlight.js" />
@@ -69,6 +85,7 @@
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v10.0\WebApplications\Microsoft.WebApplication.targets" />
   <ProjectExtensions>
