@@ -37,7 +37,7 @@ L_7.|!./7./______7./7.|!./_J,\
 |./____JL__7.|!./__JL____7.|,\
 |.L--------J.LJ.L--------J.|,\
 |..........................|,\
-L==========================J"      
+L--------------------------J".Split(',')
 
     let [<Js>] toTile c =
         match c with
@@ -56,13 +56,18 @@ L==========================J"
 
     let [<Js>] drawMaze (div:DomElement) =
         let lines = maze      
-        let lines = lines.Split(',')
         for y = 0 to lines.Length-1 do
             let line = lines.[y]
             for x = 0 to line.Length-1 do
-                let c = line.Chars(x)
+                let c = line.[x]
                 let tile = toTile c                                    
                 let style = "position:absolute;left:"+(x*8).ToString()+"px;top:"+(y*8).ToString()+"px"
                 let path = "Images/"+tile+".png"
                 let img = tag "img" ["src"@=path;"style"@=style] |> Dom.DomImage.Of
                 div.AppendChild img
+
+    let [<Js>] isBorder x y =               
+        let c = maze.[y].[x]
+        match c with
+        | '_' | '|' | '!' | '/' | '7' | 'L' | 'J' | '-' -> true
+        | _ -> false

@@ -12,7 +12,7 @@ module App =
     [<Js>]
     let main() =      
         
-        let x = ref (13 * 8 - 3)
+        let x = ref (14 * 8 - 7)
         let y = ref (23 * 8 - 3)
         let div = document.GetElementById("maindiv")
         let ppos = document.GetElementById("ppos")
@@ -21,13 +21,20 @@ module App =
         div 
         |> Event.keydown
         |> Event.add (fun e ->             
-            let s = JsString.FromCharCode(e.KeyCode)                             
-            let c = s.Chars(0)
-            let turn d = pimg?src <- "Images/p"+d+".png"        
-            if c = 'Z' then turn "l"; x := !x - 1; ppos.Style.Left <- (!x).ToString() + "px"
-            if c = 'X' then turn "r"; x := !x + 1; ppos.Style.Left <- (!x).ToString() + "px"
-            if c = 'Q' then turn "u"; y := !y - 1; ppos.Style.Top <- (!y).ToString() + "px"
-            if c = 'A' then turn "d"; y := !y + 1;  ppos.Style.Top <- (!y).ToString() + "px"
+            let s = JsString.FromCharCode(e.KeyCode)                                        
+            let (ex,ey), (dx,dy), dir =
+                match s with
+                | "Z" when !y % 8 = 5 -> (-4,0), (-1,0), "l" 
+                | "X" when !y % 8 = 5 -> (5,0), (1,0), "r"
+                | "Q" when !x % 8 = 5 -> (0,-4), (0,-1), "u"
+                | "A" when !x % 8 = 5 -> (0,5), (0,1),  "d"               
+                | _ -> (0,0), (0,0), ""
+            let bx, by = int ((!x+6+ex)/8), int ((!y+6+ey)/8)
+            if isBorder bx by |> not then x := !x + dx; y := !y + dy
+            pimg?src <- "Images/p"+dir+".png"
+            ppos.Style.Left <- (!x).ToString() + "px"
+            ppos.Style.Top <- (!y).ToString() + "px"           
+            
         )
 
         
