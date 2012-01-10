@@ -56,6 +56,7 @@ L--------------------------J"
         let white = color |> toInt
         let black = 0x00000000
         let toColor = function true -> white | false -> black
+#if SILVERLIGHT        
         let bitmap = WriteableBitmap(width, xs.Length)
         let pixels = bitmap.Pixels
         xs |> List.iteri (fun y xs ->
@@ -64,10 +65,21 @@ L--------------------------J"
                 pixels.[x+y*width] <- xs &&& bit = bit |> toColor
         )
         bitmap
+#else
+        let bitmap = WriteableBitmap(width, xs.Length, 300.0, 300.0, PixelFormats.Bgra32, null)
+        xs |> List.iteri (fun y xs ->
+            let line = 
+                Array.init width (fun x ->            
+                    let bit = 1 <<< (width - 1 - x) 
+                    xs &&& bit = bit |> toColor
+                )
+            bitmap.WritePixels(Int32Rect(0,0,width,1), line, width*4, 0 , y)
+        )  
+        bitmap
+#endif
     let toImage (bitmap:#BitmapSource) =
-        let w = bitmap.GetValue(BitmapSource.PixelWidthProperty) :?> int
-        let h = bitmap.GetValue(BitmapSource.PixelHeightProperty) :?> int
-        Image(Source=bitmap,Stretch=Stretch.Fill,Width=float w,Height=float h) 
+        let w, h = float bitmap.PixelWidth, float bitmap.PixelHeight  
+        Image(Source=bitmap,Stretch=Stretch.Fill,Width=w,Height=h) 
 
     let tops = [
         0b00000000, 0b00000000, 0b00000000
