@@ -13,6 +13,6 @@ module PacMan.App
 open System.Windows
 
 [<System.STAThread>]
-do  let win = new Window(Title="Spreadsheet", Content=GameControl())
+do  let win = new Window(Title="PacMan", Content=GameControl(), SizeToContent=SizeToContent.WidthAndHeight)
     (new Application()).Run(win) |> ignore
 #endif

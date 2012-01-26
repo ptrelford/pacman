@@ -35,6 +35,7 @@
     <BuildFilePath>$(PitLocation)\bin\Pit.Build.dll</BuildFilePath>
     <SupportedCultures>
     </SupportedCultures>
+    <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
