@@ -194,12 +194,14 @@ L--------------------------J"
     do  canvas.Width <- 28.0 * 8.0; canvas.Height <- 32.0 * 8.0
     do  control.Content <- canvas
     let lines = maze.Split('\n')
-    do  lines |> Array.iteri (fun y line ->
-            line |> Seq.iteri (fun x item ->
+    let tiles =
+        lines |> Array.mapi (fun y line ->
+            line.ToCharArray() |> Array.mapi (fun x item ->
                 let tile = toTile item |> toImage
                 Canvas.SetLeft(tile, x * 8 |> float)
                 Canvas.SetTop(tile, y * 8 |> float)
                 canvas.Children.Add tile |> ignore
+                tile
             )
         )
     let isBorder x y =               
@@ -222,17 +224,20 @@ L--------------------------J"
             elif keys.IsKeyDown(Key.A) && !x % 8 = 5 then (0,5), (0,1), pd
             elif keys.IsKeyDown(Key.Z) && !y % 8 = 5 then (-4,0),(-1,0), pl
             elif keys.IsKeyDown(Key.X) && !y % 8 = 5 then (5,0),(1,0), pr
-            else (0,0),(0,0), p
+            else (0,0),(0,0), p    
         let bx, by = int ((!x+6+ex)/8), int ((!y+6+ey)/8)
         if isBorder bx by |> not then 
             x := !x + dx; y := !y + dy
             canvas.Children.Remove(!pacman) |> ignore
             canvas.Children.Add(d) |> ignore            
             pacman := d
+        let tx, ty = int ((!x+6)/8), int ((!y+6)/8)
+        if lines.[ty].[tx] = '.' then 
+            canvas.Children.Remove(tiles.[ty].[tx]) |> ignore
         Canvas.SetLeft(!pacman, !x |> float)
         Canvas.SetTop(!pacman, !y |> float)
 
-    do run (1.0/50.0) update |> ignore 
+    do  run (1.0/50.0) update |> ignore 
 
 (*[omit:Run script on TryFSharp.org]*)
 #if INTERACTIVE
