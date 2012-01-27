@@ -79,7 +79,7 @@ module Imaging =
         let image = BitmapImage()
         image.SetSource(stream)
         #else
-        let image = BitmapImage(Uri("Images/p.png", UriKind.Relative))
+        let image = BitmapImage(Uri(path, UriKind.Relative))
         #endif
         image |> toImage
 
@@ -202,25 +202,35 @@ L--------------------------J"
                 canvas.Children.Add tile |> ignore
             )
         )
+    let isBorder x y =               
+        let c = lines.[y].[x]
+        match c with
+        | '_' | '|' | '!' | '/' | '7' | 'L' | 'J' | '-' -> true
+        | _ -> false
 
     let load s = sprintf "Images/%s.png" s |> loadImage
     let p, pu, pd, pl, pr = load "p", load "pu", load "pd", load "pl", load "pr"
-    do  canvas.Children.Add(p) |> ignore
+    let pacman = ref p
+    do  canvas.Children.Add(!pacman) |> ignore
 
     let keys = Keys(control)
-    let x = ref 0
-    let y = ref 0
+    let x = ref (14 * 8 - 7)
+    let y = ref (24 * 8 - 3)
     let update () =
-        let (dx,dy) =
-            if keys.IsKeyDown(Key.Q) || keys.IsKeyDown(Key.Up) then (0,-1)
-            elif keys.IsKeyDown(Key.A) || keys.IsKeyDown(Key.Down) then (0,1)
-            elif keys.IsKeyDown(Key.Z) || keys.IsKeyDown(Key.Left) then (-1,0)
-            elif keys.IsKeyDown(Key.X) || keys.IsKeyDown(Key.Right) then (1,0)
-            else (0,0)
-        x := !x + dx
-        y := !y + dy
-        Canvas.SetLeft(p, !x |> float)
-        Canvas.SetTop(p, !y |> float)
+        let (ex, ey), (dx, dy), d =  
+            if keys.IsKeyDown(Key.Q) && !x % 8 = 5 then (0,-4),(0,-1), pu
+            elif keys.IsKeyDown(Key.A) && !x % 8 = 5 then (0,5), (0,1), pd
+            elif keys.IsKeyDown(Key.Z) && !y % 8 = 5 then (-4,0),(-1,0), pl
+            elif keys.IsKeyDown(Key.X) && !y % 8 = 5 then (5,0),(1,0), pr
+            else (0,0),(0,0), p
+        let bx, by = int ((!x+6+ex)/8), int ((!y+6+ey)/8)
+        if isBorder bx by |> not then 
+            x := !x + dx; y := !y + dy
+            canvas.Children.Remove(!pacman) |> ignore
+            canvas.Children.Add(d) |> ignore            
+            pacman := d
+        Canvas.SetLeft(!pacman, !x |> float)
+        Canvas.SetTop(!pacman, !y |> float)
 
     do run (1.0/50.0) update |> ignore 
 
