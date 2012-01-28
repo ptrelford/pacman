@@ -145,6 +145,15 @@ ______7./7 |      ! /7./______
         0b00000000, 0b00000000, 0b00000000
         0b00000000, 0b00000000, 0b00000000
         0b00000000, 0b00000000, 0b00000000]
+    let door' = [
+        0b00000000
+        0b00000000
+        0b00000000
+        0b00000000
+        0b11111111
+        0b00000000
+        0b00000000
+        0b00000000]
     let pill' = [
         0b00000000
         0b00000000
@@ -172,12 +181,13 @@ ______7./7 |      ! /7./______
     let tl, top, tr         = fromTriple tops
     let left, blank, right  = fromTriple mids
     let bl, bottom, br      = fromTriple bots
+    let door = toBitmap Colors.White door'
     let pill = toBitmap Colors.Yellow pill'
     let power = toBitmap Colors.Yellow power'
 
     let toTile c =
         match c with
-        | '='
+        | '=' -> door
         | '_' -> top
         | '|' -> left
         | '!' -> right
@@ -218,9 +228,16 @@ ______7./7 |      ! /7./______
 
     let load s = sprintf "Images/%s.png" s |> loadImage
     let p, pu, pd, pl, pr = load "p", load "pu", load "pd", load "pl", load "pr"
-    let ghost = load "pink1"
-    do  set ghost (15 * 8 - 7, 14 * 8 - 3)
-    do  canvas.Children.Add(ghost) |> ignore
+    let blinky, pinky, inky, pokey = load "red1", load "pink1", load "cyan1", load "orange1"
+    let ghosts = [
+        blinky, (15, 12)
+        inky, (13, 15)
+        pinky , (15, 15)
+        pokey , (17, 15)]
+    do  ghosts |> List.iter (fun (ghost,(x,y)) -> 
+        canvas.Children.Add(ghost) |> ignore
+        set ghost (x*8-7,y*8-3)
+        )
 
     let pacman = ref p
     do  canvas.Children.Add(!pacman) |> ignore
@@ -228,14 +245,16 @@ ______7./7 |      ! /7./______
     let keys = Keys(control)
     let x = ref (15 * 8 - 7)
     let y = ref (24 * 8 - 3)
-    let update () =
+
+    let noWall (ex,ey) =
+        let bx, by = int ((!x+6+ex)/8), int ((!y+6+ey)/8)
+        isWall bx by |> not
+
+    let updatePacman () =
         let up, down, left, right = Key.Q, Key.A, Key.Z, Key.X
         let pressed key = keys.IsKeyDown key
         let verticallyAligned, horizontallyAligned  = !x % 8 = 5, !y % 8 = 5 
-        let noWall (ex,ey) =
-            let bx, by = int ((!x+6+ex)/8), int ((!y+6+ey)/8)
-            isWall bx by |> not
-        let availableMoves = 
+        let directions = 
             [
             if pressed up && verticallyAligned && noWall (0,-4) then yield (0,-1), pu
             if pressed down && verticallyAligned && noWall (0,5) then yield (0,1), pd
@@ -250,13 +269,14 @@ ______7./7 |      ! /7./______
             canvas.Children.Remove(!pacman) |> ignore
             canvas.Children.Add(d) |> ignore
             pacman := d
-        if availableMoves.Length > 0 then
-            availableMoves.Head |> move
+        if directions.Length > 0 then
+            directions.Head |> move
         let tx, ty = int ((!x+6)/8), int ((!y+6)/8)
         if tileAt tx ty = '.' then
             canvas.Children.Remove(tiles.[ty].[tx]) |> ignore
         set !pacman (!x,!y)
-
+    let update () =
+        updatePacman ()
     do run (1.0/50.0) update |> ignore 
 
 (*[omit:Run script on TryFSharp.org]*)
