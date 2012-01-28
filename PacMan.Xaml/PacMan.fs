@@ -23,6 +23,15 @@ type Keys (control:Control) =
     do  control.KeyUp.Add (fun e -> keysDown <- keysDown.Remove e.Key)
     member keys.IsKeyDown key = keysDown.Contains key
 
+module Seq =
+    let unsort xs =
+        let rand = System.Random()
+        xs
+        |> Seq.map (fun x -> rand.Next(),x)
+        |> Seq.cache
+        |> Seq.sortBy fst
+        |> Seq.map snd
+
 [<AutoOpen>]
 module Game = 
     let run rate update =
@@ -229,14 +238,17 @@ ______7./7 |      ! /7./______
     let load s = sprintf "Images/%s.png" s |> loadImage
     let p, pu, pd, pl, pr = load "p", load "pu", load "pd", load "pl", load "pr"
     let blinky, pinky, inky, pokey = load "red1", load "pink1", load "cyan1", load "orange1"
-    let ghosts = [
-        blinky, (15, 12)
-        inky, (13, 15)
-        pinky , (15, 15)
-        pokey , (17, 15)]
-    do  ghosts |> List.iter (fun (ghost,(x,y)) -> 
+    let mutable ghosts = 
+        [
+        blinky, (15, 12), (1,0)
+        inky, (13, 15), (1,0)
+        pinky , (15, 15), (0,-1)
+        pokey , (17, 15), (-1,0)
+        ]
+        |> List.map (fun (ghost,(x,y),v) -> ghost, (x*8-7,y*8-3),v)
+    do  ghosts |> List.iter (fun (ghost,(x,y),_) -> 
         canvas.Children.Add(ghost) |> ignore
-        set ghost (x*8-7,y*8-3)
+        set ghost (x,y)
         )
 
     let pacman = ref p
@@ -246,20 +258,53 @@ ______7./7 |      ! /7./______
     let x = ref (15 * 8 - 7)
     let y = ref (24 * 8 - 3)
 
-    let noWall (ex,ey) =
-        let bx, by = int ((!x+6+ex)/8), int ((!y+6+ey)/8)
+    let noWall (x,y) (ex,ey) =
+        let bx, by = int ((x+6+ex)/8), int ((y+6+ey)/8)
         isWall bx by |> not
+
+    let verticallyAligned (x,y) = x % 8 = 5
+    let horizontallyAligned (x,y) = y % 8 = 5 
+
+    let canGoUp (x,y) = verticallyAligned (x,y) && noWall (x,y) (0,-4)
+    let canGoDown (x,y) = verticallyAligned (x,y) && noWall (x,y) (0,5)
+    let canGoLeft (x,y) = horizontallyAligned (x,y) && noWall (x,y) (-4,0)
+    let canGoRight (x,y) = horizontallyAligned (x,y) && noWall (x,y) (5,0)
+
+    let updateGhosts () =
+        ghosts <- 
+            ghosts |> List.map (fun (ghost,(x,y),(dx,dy)) ->
+            let canMove =
+                match dx,dy with
+                | 0,-1  -> canGoUp (x,y)
+                | 0, 1 -> canGoDown (x,y)
+                | -1,0 -> canGoLeft (x,y)
+                | 1, 0 -> canGoRight (x,y)
+            let directions = 
+                [
+                if canGoUp (x,y) then yield (0,-1)
+                if canGoDown (x,y) then yield (0,1)
+                if canGoLeft (x,y) then yield (-1,0)
+                if canGoRight(x,y) then yield (1,0)
+                ]
+                |> Seq.unsort
+                |> Seq.sortBy (fun (a,b) -> if (a <> 0 && dx <> 0) || (b<>0 && dy<>0) then 1 else 0)
+            let (x,y), (dx,dy) = 
+                if canMove then (x+dx,y+dy), (dx,dy) 
+                else (x,y), Seq.head directions
+            set ghost (x,y)
+            ghost,(x,y),(dx,dy)
+            )
 
     let updatePacman () =
         let up, down, left, right = Key.Q, Key.A, Key.Z, Key.X
         let pressed key = keys.IsKeyDown key
-        let verticallyAligned, horizontallyAligned  = !x % 8 = 5, !y % 8 = 5 
+        
         let directions = 
             [
-            if pressed up && verticallyAligned && noWall (0,-4) then yield (0,-1), pu
-            if pressed down && verticallyAligned && noWall (0,5) then yield (0,1), pd
-            if pressed left && horizontallyAligned && noWall (-4,0) then yield (-1,0), pl
-            if pressed right && horizontallyAligned && noWall (5,0) then yield (1,0), pr
+            if pressed up && canGoUp (!x,!y) then yield (0,-1), pu
+            if pressed down && canGoDown (!x,!y) then yield (0,1), pd
+            if pressed left && canGoLeft (!x,!y) then yield (-1,0), pl
+            if pressed right && canGoRight (!x,!y) then yield (1,0), pr
             ] 
             |> List.sortBy (fun (_,p') -> p' = !pacman)
         let move ((dx,dy),d) =
@@ -274,9 +319,12 @@ ______7./7 |      ! /7./______
         let tx, ty = int ((!x+6)/8), int ((!y+6)/8)
         if tileAt tx ty = '.' then
             canvas.Children.Remove(tiles.[ty].[tx]) |> ignore
+        if tileAt tx ty = 'o' then
+            canvas.Children.Remove(tiles.[ty].[tx]) |> ignore
         set !pacman (!x,!y)
     let update () =
         updatePacman ()
+        updateGhosts ()
     do run (1.0/50.0) update |> ignore 
 
 (*[omit:Run script on TryFSharp.org]*)
