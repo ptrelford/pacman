@@ -146,6 +146,9 @@
     <Content Include="Properties\OutOfBrowserSettings.xml" />
     <Compile Include="PacMan.fs" />
     <Compile Include="App.fs" />
+    <Content Include="Images\blue.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <Reference Include="mscorlib" />

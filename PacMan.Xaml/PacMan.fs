@@ -244,7 +244,7 @@ _______7./7 |      ! /7./_______
     let isWallAt (x,y) = tileAt x y |> isWall
 
     let load s = sprintf "Images/%s.png" s |> loadImage
-    let p, pu, pd, pl, pr = load "p", load "pu", load "pd", load "pl", load "pr"
+    let p, pu, pd, pl, pr = load "p", load "pu", load "pd", load "pl", load "pr"    
     let mutable ghosts = 
         [
         "red", (16, 12), (1,0)
@@ -253,9 +253,10 @@ _______7./7 |      ! /7./_______
         "orange" , (18, 16), (-1,0)
         ]
         |> List.map (fun (color,(x,y),v) -> 
+            let blue = load "blue"
             let u, d, l, r =
                 load (color+"u"), load (color+"d"), load (color+"l"), load (color+"r")
-            (u,d,l,r), (x*8-7,y*8-3), v, d
+            (u,d,l,r,blue), (x*8-7,y*8-3), v, d
         )
     do  ghosts |> List.iter (fun (_,(x,y),_,ghost) -> 
         add ghost
@@ -291,7 +292,7 @@ _______7./7 |      ! /7./_______
 
     let updateGhosts () =
         ghosts <- 
-            ghosts |> List.map (fun ((u,d,l,r),(x,y),(dx,dy),g) ->
+            ghosts |> List.map (fun ((u,d,l,r,blue),(x,y),(dx,dy),g) ->
             let face, canMove =
                 match dx,dy with
                 | 0,-1 -> u, canGoUp (x,y)
@@ -317,9 +318,10 @@ _______7./7 |      ! /7./_______
                 else dx,dy
             let x,y = go (x,y) (dx,dy)
             remove g
+            let face = if powerCount > 0 then blue else face
             add face
             set face (x,y)
-            (u,d,l,r),(x,y),(dx,dy),face
+            (u,d,l,r,blue),(x,y),(dx,dy),face
             )
 
     let updatePacman () =
