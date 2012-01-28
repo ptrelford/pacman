@@ -245,16 +245,19 @@ _______7./7 |      ! /7./_______
 
     let load s = sprintf "Images/%s.png" s |> loadImage
     let p, pu, pd, pl, pr = load "p", load "pu", load "pd", load "pl", load "pr"
-    let blinky, pinky, inky, pokey = load "red1", load "pink1", load "cyan1", load "orange1"
     let mutable ghosts = 
         [
-        blinky, (16, 12), (1,0)
-        inky, (14, 16), (1,0)
-        pinky , (16, 14), (0,-1)
-        pokey , (18, 16), (-1,0)
+        "red", (16, 12), (1,0)
+        "cyan", (14, 16), (1,0)
+        "pink" , (16, 14), (0,-1)
+        "orange" , (18, 16), (-1,0)
         ]
-        |> List.map (fun (ghost,(x,y),v) -> ghost, (x*8-7,y*8-3),v)
-    do  ghosts |> List.iter (fun (ghost,(x,y),_) -> 
+        |> List.map (fun (color,(x,y),v) -> 
+            let u, d, l, r =
+                load (color+"u"), load (color+"d"), load (color+"l"), load (color+"r")
+            (u,d,l,r), (x*8-7,y*8-3), v, d
+        )
+    do  ghosts |> List.iter (fun (_,(x,y),_,ghost) -> 
         add ghost
         set ghost (x,y)
         )
@@ -288,13 +291,13 @@ _______7./7 |      ! /7./_______
 
     let updateGhosts () =
         ghosts <- 
-            ghosts |> List.map (fun (ghost,(x,y),(dx,dy)) ->
-            let canMove =
+            ghosts |> List.map (fun ((u,d,l,r),(x,y),(dx,dy),g) ->
+            let face, canMove =
                 match dx,dy with
-                | 0,-1  -> canGoUp (x,y)
-                | 0, 1 -> canGoDown (x,y)
-                | -1,0 -> canGoLeft (x,y)
-                | 1, 0 -> canGoRight (x,y)
+                | 0,-1 -> u, canGoUp (x,y)
+                | 0, 1 -> d, canGoDown (x,y)
+                | -1,0 -> l, canGoLeft (x,y)
+                | 1, 0 -> r, canGoRight (x,y)
                 | _, _ -> invalidOp ""
             let isBackwards (a,b) =
                 (a <> 0 && a = -dx) || (b <> 0 && b = -dy)
@@ -313,8 +316,10 @@ _______7./7 |      ! /7./_______
                 then newDirection
                 else dx,dy
             let x,y = go (x,y) (dx,dy)
-            set ghost (x,y)
-            ghost,(x,y),(dx,dy)
+            remove g
+            add face
+            set face (x,y)
+            (u,d,l,r),(x,y),(dx,dy),face
             )
 
     let updatePacman () =
