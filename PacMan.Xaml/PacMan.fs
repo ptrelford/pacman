@@ -21,6 +21,7 @@ type Keys (control:Control) =
     let mutable keysDown = Set.empty  
     do  control.KeyDown.Add (fun e -> keysDown <- keysDown.Add e.Key)
     do  control.KeyUp.Add (fun e -> keysDown <- keysDown.Remove e.Key)
+    do  control.LostFocus.Add (fun _ -> keysDown <- Set.empty)
     member keys.IsKeyDown key = keysDown.Contains key
 
 module Seq =
@@ -94,6 +95,7 @@ module Imaging =
 
 type GameControl() as control = 
     inherit UserControl(Background=SolidColorBrush Colors.Black)
+    do control.RenderTransform <- ScaleTransform(ScaleX=1.5,ScaleY=1.5)
     let maze = "
 ##/------------7/------------7##
 ##|............|!............|##
@@ -219,6 +221,8 @@ _______7./7 |      ! /7./_______
     let canvas = Canvas(Background = SolidColorBrush Colors.Black)
     let walls = Canvas()
     do  canvas.Width <- 28.0 * 8.0; canvas.Height <- 32.0 * 8.0
+    let g = RectangleGeometry(Rect=Rect(Width=canvas.Width,Height=canvas.Height))
+    do  canvas.Clip <- g
     let add item = canvas.Children.Add(item) |> ignore
     let remove item = canvas.Children.Remove(item) |> ignore
     do  add walls
@@ -290,9 +294,8 @@ _______7./7 |      ! /7./_______
             else x
         x + dx, y + dy
 
-    let updateGhosts () =
-        ghosts <- 
-            ghosts |> List.map (fun ((u,d,l,r,blue),(x,y),(dx,dy),g) ->
+    let newGhosts () =
+        ghosts |> List.map (fun ((u,d,l,r,blue),(x,y),(dx,dy),g) ->
             let face, canMove =
                 match dx,dy with
                 | 0,-1 -> u, canGoUp (x,y)
@@ -322,7 +325,9 @@ _______7./7 |      ! /7./_______
             add face
             set face (x,y)
             (u,d,l,r,blue),(x,y),(dx,dy),face
-            )
+        )
+
+    let updateGhosts () = ghosts <- newGhosts ()
 
     let updatePacman () =
         let up, down, left, right = Key.Q, Key.A, Key.Z, Key.X
@@ -362,7 +367,7 @@ _______7./7 |      ! /7./_______
         updatePacman ()
         updateGhosts ()
         updatePower ()
-    do run (1.0/50.0) update |> ignore 
+    do run (1.0/50.0) update |> ignore
 
 (*[omit:Run script on TryFSharp.org]*)
 #if INTERACTIVE
