@@ -95,37 +95,37 @@ module Imaging =
 type GameControl() as control = 
     inherit UserControl(Background=SolidColorBrush Colors.Black)
     let maze = "
-#/------------7/------------7#
-#|............|!............|#
-#|./__7./___7.|!./___7./__7.|#
-#|o|  !.|   !.|!.|   !.|  !o|#
-#|.L--J.L---J.LJ.L---J.L--J.|#
-#|..........................|#
-#|./__7./7./______7./7./__7.|#
-#|.L--J.|!.L--7/--J.|!.L--J.|#
-#|......|!....|!....|!......|#
-#L____7.|L__7 |! /__J!./____J#
-######!.|/--J LJ L--7!.|######
-######!.|!          |!.|######
-######!.|! /__==__7 |!.|######
-------J.LJ |      ! LJ.L------
-###### .   |      !   . ######
-______7./7 |      ! /7./______
-######!.|! L______J |!.|######
-######!.|!          |!.|######
-######!.|! /______7 |!.|######
-#/----J.LJ L--7/--J LJ.L----7#
-#|............|!............|#
-#|./__7./___7.|!./___7./__7.|#
-#|.L-7!.L---J.LJ.L---J.|/-J.|#
-#|o..|!.......<>.......|!..o|#
-#L_7.|!./7./______7./7.|!./_J#
-#/-J.LJ.|!.L--7/--J.|!.LJ.L-7#
-#|......|!....|!....|!......|#
-#|./____JL__7.|!./__JL____7.|#
-#|.L--------J.LJ.L--------J.|#
-#|..........................|#
-#L--------------------------J#"
+##/------------7/------------7##
+##|............|!............|##
+##|./__7./___7.|!./___7./__7.|##
+##|o|  !.|   !.|!.|   !.|  !o|##
+##|.L--J.L---J.LJ.L---J.L--J.|##
+##|..........................|##
+##|./__7./7./______7./7./__7.|##
+##|.L--J.|!.L--7/--J.|!.L--J.|##
+##|......|!....|!....|!......|##
+##L____7.|L__7 |! /__J!./____J##
+#######!.|/--J LJ L--7!.|#######
+#######!.|!          |!.|#######
+#######!.|! /__==__7 |!.|#######
+-------J.LJ |      ! LJ.L-------
+########.   | **** !   .########
+_______7./7 |      ! /7./_______
+#######!.|! L______J |!.|#######
+#######!.|!          |!.|#######
+#######!.|! /______7 |!.|#######
+##/----J.LJ L--7/--J LJ.L----7##
+##|............|!............|##
+##|./__7./___7.|!./___7./__7.|##
+##|.L-7!.L---J.LJ.L---J.|/-J.|##
+##|o..|!.......<>.......|!..o|##
+##L_7.|!./7./______7./7.|!./_J##
+##/-J.LJ.|!.L--7/--J.|!.LJ.L-7##
+##|......|!....|!....|!......|##
+##|./____JL__7.|!./__JL____7.|##
+##|.L--------J.LJ.L--------J.|##
+##|..........................|##
+##L--------------------------J##"
 
     let tops = [
         0b00000000, 0b00000000, 0b00000000
@@ -210,11 +210,11 @@ ______7./7 |      ! /7./______
         | _ -> blank
 
     let isWall = function
-        | '_' | '|' | '!' | '/' | '7' | 'L' | 'J' | '-' -> true
+        | '_' | '|' | '!' | '/' | '7' | 'L' | 'J' | '-' | '*' -> true
         | _ -> false
 
     let set element (x,y) =
-        Canvas.SetLeft(element, x - 8 |> float)
+        Canvas.SetLeft(element, x - 16 |> float)
         Canvas.SetTop(element, y |> float)
     let canvas = Canvas(Background = SolidColorBrush Colors.Black)
     let walls = Canvas()
@@ -238,7 +238,7 @@ ______7./7 |      ! /7./______
         )
 
     let tileAt x y =
-        if x < 0 || x > 28 then ' '
+        if x < 0 || x > 30 then ' '
         else lines.[y].[x]
 
     let isWallAt (x,y) = tileAt x y |> isWall
@@ -248,10 +248,10 @@ ______7./7 |      ! /7./______
     let blinky, pinky, inky, pokey = load "red1", load "pink1", load "cyan1", load "orange1"
     let mutable ghosts = 
         [
-        blinky, (15, 12), (1,0)
-        inky, (13, 15), (1,0)
-        pinky , (15, 15), (0,-1)
-        pokey , (17, 15), (-1,0)
+        blinky, (16, 12), (1,0)
+        inky, (14, 16), (1,0)
+        pinky , (16, 14), (0,-1)
+        pokey , (18, 16), (-1,0)
         ]
         |> List.map (fun (ghost,(x,y),v) -> ghost, (x*8-7,y*8-3),v)
     do  ghosts |> List.iter (fun (ghost,(x,y),_) -> 
@@ -264,7 +264,7 @@ ______7./7 |      ! /7./______
     let mutable powerCount = 0
 
     let keys = Keys(control)
-    let x = ref (15 * 8 - 7)
+    let x = ref (16 * 8 - 7)
     let y = ref (24 * 8 - 3)
 
     let noWall (x,y) (ex,ey) =
@@ -272,12 +272,19 @@ ______7./7 |      ! /7./______
         isWallAt (bx,by) |> not
 
     let verticallyAligned (x,y) = x % 8 = 5
-    let horizontallyAligned (x,y) = y % 8 = 5 
+    let horizontallyAligned (x,y) = y % 8 = 5
 
     let canGoUp (x,y) = verticallyAligned (x,y) && noWall (x,y) (0,-4)
     let canGoDown (x,y) = verticallyAligned (x,y) && noWall (x,y) (0,5)
     let canGoLeft (x,y) = horizontallyAligned (x,y) && noWall (x,y) (-4,0)
     let canGoRight (x,y) = horizontallyAligned (x,y) && noWall (x,y) (5,0)
+
+    let go (x,y) (dx,dy) =
+        let x = 
+            if   dx = -1 && x = 0 then 30 * 8
+            elif dx = 1  && x = 30 *8 then 0
+            else x
+        x + dx, y + dy
 
     let updateGhosts () =
         ghosts <- 
@@ -289,6 +296,8 @@ ______7./7 |      ! /7./______
                 | -1,0 -> canGoLeft (x,y)
                 | 1, 0 -> canGoRight (x,y)
                 | _, _ -> invalidOp ""
+            let isBackwards (a,b) =
+                (a <> 0 && a = -dx) || (b <> 0 && b = -dy)
             let directions = 
                 [
                 if canGoUp (x,y) then yield (0,-1)
@@ -297,10 +306,13 @@ ______7./7 |      ! /7./______
                 if canGoRight(x,y) then yield (1,0)
                 ]
                 |> Seq.unsort
-                |> Seq.sortBy (fun (a,b) -> if (a <> 0 && dx <> 0) || (b<>0 && dy<>0) then 1 else 0)
-            let (x,y), (dx,dy) = 
-                if canMove then (x+dx,y+dy), (dx,dy) 
-                else (x,y), Seq.head directions
+                |> Seq.sortBy isBackwards
+            let dx, dy = 
+                let newDirection = directions |> Seq.head
+                if not <| isBackwards newDirection 
+                then newDirection
+                else dx,dy
+            let x,y = go (x,y) (dx,dy)
             set ghost (x,y)
             ghost,(x,y),(dx,dy)
             )
@@ -317,9 +329,8 @@ ______7./7 |      ! /7./______
             ] 
             |> List.sortBy (fun (_,p') -> p' = !pacman)
         let move ((dx,dy),d) =
-            if dx = -1 && !x <= 0 then x := 30 * 8
-            if dx = 1  && !x = 30 *8 then x := 0
-            x := !x + dx; y := !y  + dy
+            let x', y' = go (!x,!y) (dx,dy)
+            x := x'; y := y'
             remove !pacman
             add d
             pacman := d
