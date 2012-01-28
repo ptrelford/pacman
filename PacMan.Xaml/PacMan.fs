@@ -86,37 +86,37 @@ module Imaging =
 type GameControl() as control = 
     inherit UserControl(Background=SolidColorBrush Colors.Black)
     let maze = "
-/------------7/------------7
-|............|!............|
-|./__7./___7.|!./___7./__7.|
-|o|  !.|   !.|!.|   !.|  !o|
-|.L--J.L---J.LJ.L---J.L--J.|
-|..........................|
-|./__7./7./______7./7./__7.|
-|.L--J.|!.L--7/--J.|!.L--J.|
-|......|!....|!....|!......|e
-L____7.|L__7 |! /__J!./____J
-#####!.|/--J LJ L--7!.|#####
-#####!.|!          |!.|#####
-#####!.|! /__==__7 |!.|#####
------J.LJ |      ! LJ.L-----
-##### .   |      !   . #####
-_____7./7 |      ! /7./_____
-#####!.|! L______J |!.|#####
-#####!.|!          |!.|#####
-#####!.|! /______7 |!.|#####
-/----J.LJ L--7/--J LJ.L----7
-|............|!............|
-|./__7./___7.|!./___7./__7.|
-|.L-7!.L---J.LJ.L---J.|/-J.|
-|o..|!.......<>.......|!..o|
-L_7.|!./7./______7./7.|!./_J
-/-J.LJ.|!.L--7/--J.|!.LJ.L-7
-|......|!....|!....|!......|
-|./____JL__7.|!./__JL____7.|
-|.L--------J.LJ.L--------J.|
-|..........................|
-L--------------------------J"
+#/------------7/------------7#
+#|............|!............|#
+#|./__7./___7.|!./___7./__7.|#
+#|o|  !.|   !.|!.|   !.|  !o|#
+#|.L--J.L---J.LJ.L---J.L--J.|#
+#|..........................|#
+#|./__7./7./______7./7./__7.|#
+#|.L--J.|!.L--7/--J.|!.L--J.|#
+#|......|!....|!....|!......|#
+#L____7.|L__7 |! /__J!./____J#
+######!.|/--J LJ L--7!.|######
+######!.|!          |!.|######
+######!.|! /__==__7 |!.|######
+------J.LJ |      ! LJ.L------
+###### .   |      !   . ######
+______7./7 |      ! /7./______
+######!.|! L______J |!.|######
+######!.|!          |!.|######
+######!.|! /______7 |!.|######
+#/----J.LJ L--7/--J LJ.L----7#
+#|............|!............|#
+#|./__7./___7.|!./___7./__7.|#
+#|.L-7!.L---J.LJ.L---J.|/-J.|#
+#|o..|!.......<>.......|!..o|#
+#L_7.|!./7./______7./7.|!./_J#
+#/-J.LJ.|!.L--7/--J.|!.LJ.L-7#
+#|......|!....|!....|!......|#
+#|./____JL__7.|!./__JL____7.|#
+#|.L--------J.LJ.L--------J.|#
+#|..........................|#
+#L--------------------------J#"
 
     let tops = [
         0b00000000, 0b00000000, 0b00000000
@@ -190,6 +190,9 @@ L--------------------------J"
         | 'o' -> power
         | _ -> blank
 
+    let set element (x,y) =
+        Canvas.SetLeft(element, x - 8 |> float)
+        Canvas.SetTop(element, y |> float)
     let canvas = Canvas(Background = SolidColorBrush Colors.Black)
     do  canvas.Width <- 28.0 * 8.0; canvas.Height <- 32.0 * 8.0
     do  control.Content <- canvas
@@ -198,14 +201,17 @@ L--------------------------J"
         lines |> Array.mapi (fun y line ->
             line.ToCharArray() |> Array.mapi (fun x item ->
                 let tile = toTile item |> toImage
-                Canvas.SetLeft(tile, x * 8 |> float)
-                Canvas.SetTop(tile, y * 8 |> float)
+                set tile (x * 8, y * 8)
                 canvas.Children.Add tile |> ignore
                 tile
             )
         )
-    let isWall x y =               
-        let c = lines.[y].[x]
+
+    let tileAt x y =
+        if x < 0 || x > 28 then ' '
+        else lines.[y].[x]
+    let isWall x y =
+        let c = tileAt x y
         match c with
         | '_' | '|' | '!' | '/' | '7' | 'L' | 'J' | '-' -> true
         | _ -> false
@@ -213,15 +219,14 @@ L--------------------------J"
     let load s = sprintf "Images/%s.png" s |> loadImage
     let p, pu, pd, pl, pr = load "p", load "pu", load "pd", load "pl", load "pr"
     let ghost = load "pink1"
-    do  Canvas.SetTop(ghost, float (15 * 8 - 7))
-    do  Canvas.SetLeft(ghost, float (14 * 8 - 3)) 
+    do  set ghost (15 * 8 - 7, 14 * 8 - 3)
     do  canvas.Children.Add(ghost) |> ignore
 
     let pacman = ref p
     do  canvas.Children.Add(!pacman) |> ignore
 
     let keys = Keys(control)
-    let x = ref (14 * 8 - 7)
+    let x = ref (15 * 8 - 7)
     let y = ref (24 * 8 - 3)
     let update () =
         let up, down, left, right = Key.Q, Key.A, Key.Z, Key.X
@@ -239,6 +244,8 @@ L--------------------------J"
             ] 
             |> List.sortBy (fun (_,p') -> p' = !pacman)
         let move ((dx,dy),d) =
+            if dx = -1 && !x <= 0 then x := 30 * 8
+            if dx = 1  && !x = 30 *8 then x := 0
             x := !x + dx; y := !y  + dy
             canvas.Children.Remove(!pacman) |> ignore
             canvas.Children.Add(d) |> ignore
@@ -246,10 +253,9 @@ L--------------------------J"
         if availableMoves.Length > 0 then
             availableMoves.Head |> move
         let tx, ty = int ((!x+6)/8), int ((!y+6)/8)
-        if lines.[ty].[tx] = '.' then
+        if tileAt tx ty = '.' then
             canvas.Children.Remove(tiles.[ty].[tx]) |> ignore
-        Canvas.SetLeft(!pacman, !x |> float)
-        Canvas.SetTop(!pacman, !y |> float)
+        set !pacman (!x,!y)
 
     do run (1.0/50.0) update |> ignore 
 
