@@ -204,7 +204,7 @@ L--------------------------J"
                 tile
             )
         )
-    let isBorder x y =               
+    let isWall x y =               
         let c = lines.[y].[x]
         match c with
         | '_' | '|' | '!' | '/' | '7' | 'L' | 'J' | '-' -> true
@@ -212,6 +212,11 @@ L--------------------------J"
 
     let load s = sprintf "Images/%s.png" s |> loadImage
     let p, pu, pd, pl, pr = load "p", load "pu", load "pd", load "pl", load "pr"
+    let ghost = load "pink1"
+    do  Canvas.SetTop(ghost, float (15 * 8 - 7))
+    do  Canvas.SetLeft(ghost, float (14 * 8 - 3)) 
+    do  canvas.Children.Add(ghost) |> ignore
+
     let pacman = ref p
     do  canvas.Children.Add(!pacman) |> ignore
 
@@ -219,25 +224,34 @@ L--------------------------J"
     let x = ref (14 * 8 - 7)
     let y = ref (24 * 8 - 3)
     let update () =
-        let (ex, ey), (dx, dy), d =  
-            if keys.IsKeyDown(Key.Q) && !x % 8 = 5 then (0,-4),(0,-1), pu
-            elif keys.IsKeyDown(Key.A) && !x % 8 = 5 then (0,5), (0,1), pd
-            elif keys.IsKeyDown(Key.Z) && !y % 8 = 5 then (-4,0),(-1,0), pl
-            elif keys.IsKeyDown(Key.X) && !y % 8 = 5 then (5,0),(1,0), pr
-            else (0,0),(0,0), p    
-        let bx, by = int ((!x+6+ex)/8), int ((!y+6+ey)/8)
-        if isBorder bx by |> not then 
-            x := !x + dx; y := !y + dy
+        let up, down, left, right = Key.Q, Key.A, Key.Z, Key.X
+        let pressed key = keys.IsKeyDown key
+        let verticallyAligned, horizontallyAligned  = !x % 8 = 5, !y % 8 = 5 
+        let noWall (ex,ey) =
+            let bx, by = int ((!x+6+ex)/8), int ((!y+6+ey)/8)
+            isWall bx by |> not
+        let availableMoves = 
+            [
+            if pressed up && verticallyAligned && noWall (0,-4) then yield (0,-1), pu
+            if pressed down && verticallyAligned && noWall (0,5) then yield (0,1), pd
+            if pressed left && horizontallyAligned && noWall (-4,0) then yield (-1,0), pl
+            if pressed right && horizontallyAligned && noWall (5,0) then yield (1,0), pr
+            ] 
+            |> List.sortBy (fun (_,p') -> p' = !pacman)
+        let move ((dx,dy),d) =
+            x := !x + dx; y := !y  + dy
             canvas.Children.Remove(!pacman) |> ignore
-            canvas.Children.Add(d) |> ignore            
+            canvas.Children.Add(d) |> ignore
             pacman := d
+        if availableMoves.Length > 0 then
+            availableMoves.Head |> move
         let tx, ty = int ((!x+6)/8), int ((!y+6)/8)
-        if lines.[ty].[tx] = '.' then 
+        if lines.[ty].[tx] = '.' then
             canvas.Children.Remove(tiles.[ty].[tx]) |> ignore
         Canvas.SetLeft(!pacman, !x |> float)
         Canvas.SetTop(!pacman, !y |> float)
 
-    do  run (1.0/50.0) update |> ignore 
+    do run (1.0/50.0) update |> ignore 
 
 (*[omit:Run script on TryFSharp.org]*)
 #if INTERACTIVE
