@@ -209,11 +209,20 @@ ______7./7 |      ! /7./______
         | 'o' -> power
         | _ -> blank
 
+    let isWall = function
+        | '_' | '|' | '!' | '/' | '7' | 'L' | 'J' | '-' -> true
+        | _ -> false
+
     let set element (x,y) =
         Canvas.SetLeft(element, x - 8 |> float)
         Canvas.SetTop(element, y |> float)
     let canvas = Canvas(Background = SolidColorBrush Colors.Black)
+    let walls = Canvas()
     do  canvas.Width <- 28.0 * 8.0; canvas.Height <- 32.0 * 8.0
+    let add item = canvas.Children.Add(item) |> ignore
+    let remove item = canvas.Children.Remove(item) |> ignore
+    do  add walls
+    do  control.Width <- canvas.Width; control.Height <- canvas.Height
     do  control.Content <- canvas
     let lines = maze.Split('\n')
     let tiles =
@@ -221,7 +230,9 @@ ______7./7 |      ! /7./______
             line.ToCharArray() |> Array.mapi (fun x item ->
                 let tile = toTile item |> toImage
                 set tile (x * 8, y * 8)
-                canvas.Children.Add tile |> ignore
+                if isWall item 
+                then walls.Children.Add tile |> ignore
+                else canvas.Children.Add tile |> ignore
                 tile
             )
         )
@@ -229,11 +240,8 @@ ______7./7 |      ! /7./______
     let tileAt x y =
         if x < 0 || x > 28 then ' '
         else lines.[y].[x]
-    let isWall x y =
-        let c = tileAt x y
-        match c with
-        | '_' | '|' | '!' | '/' | '7' | 'L' | 'J' | '-' -> true
-        | _ -> false
+
+    let isWallAt (x,y) = tileAt x y |> isWall
 
     let load s = sprintf "Images/%s.png" s |> loadImage
     let p, pu, pd, pl, pr = load "p", load "pu", load "pd", load "pl", load "pr"
@@ -247,12 +255,13 @@ ______7./7 |      ! /7./______
         ]
         |> List.map (fun (ghost,(x,y),v) -> ghost, (x*8-7,y*8-3),v)
     do  ghosts |> List.iter (fun (ghost,(x,y),_) -> 
-        canvas.Children.Add(ghost) |> ignore
+        add ghost
         set ghost (x,y)
         )
 
     let pacman = ref p
-    do  canvas.Children.Add(!pacman) |> ignore
+    do  add !pacman
+    let mutable powerCount = 0
 
     let keys = Keys(control)
     let x = ref (15 * 8 - 7)
@@ -260,7 +269,7 @@ ______7./7 |      ! /7./______
 
     let noWall (x,y) (ex,ey) =
         let bx, by = int ((x+6+ex)/8), int ((y+6+ey)/8)
-        isWall bx by |> not
+        isWallAt (bx,by) |> not
 
     let verticallyAligned (x,y) = x % 8 = 5
     let horizontallyAligned (x,y) = y % 8 = 5 
@@ -279,6 +288,7 @@ ______7./7 |      ! /7./______
                 | 0, 1 -> canGoDown (x,y)
                 | -1,0 -> canGoLeft (x,y)
                 | 1, 0 -> canGoRight (x,y)
+                | _, _ -> invalidOp ""
             let directions = 
                 [
                 if canGoUp (x,y) then yield (0,-1)
@@ -298,7 +308,6 @@ ______7./7 |      ! /7./______
     let updatePacman () =
         let up, down, left, right = Key.Q, Key.A, Key.Z, Key.X
         let pressed key = keys.IsKeyDown key
-        
         let directions = 
             [
             if pressed up && canGoUp (!x,!y) then yield (0,-1), pu
@@ -311,20 +320,30 @@ ______7./7 |      ! /7./______
             if dx = -1 && !x <= 0 then x := 30 * 8
             if dx = 1  && !x = 30 *8 then x := 0
             x := !x + dx; y := !y  + dy
-            canvas.Children.Remove(!pacman) |> ignore
-            canvas.Children.Add(d) |> ignore
+            remove !pacman
+            add d
             pacman := d
         if directions.Length > 0 then
             directions.Head |> move
         let tx, ty = int ((!x+6)/8), int ((!y+6)/8)
         if tileAt tx ty = '.' then
-            canvas.Children.Remove(tiles.[ty].[tx]) |> ignore
+            remove (tiles.[ty].[tx])
         if tileAt tx ty = 'o' then
-            canvas.Children.Remove(tiles.[ty].[tx]) |> ignore
+            if canvas.Children.Contains (tiles.[ty].[tx]) then
+                powerCount <- 500
+            remove (tiles.[ty].[tx])
         set !pacman (!x,!y)
+
+    let updatePower () =
+        if powerCount > 0 then
+            if (powerCount/5) % 2 = 1 then walls.Opacity <- 0.5
+            else walls.Opacity <- 1.0
+        powerCount <- powerCount - 1
+
     let update () =
         updatePacman ()
         updateGhosts ()
+        updatePower ()
     do run (1.0/50.0) update |> ignore 
 
 (*[omit:Run script on TryFSharp.org]*)
