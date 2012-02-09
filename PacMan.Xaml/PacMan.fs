@@ -361,11 +361,31 @@ _______7./7 |      ! /7./_______
         if powerCount > 0 then
             if (powerCount/5) % 2 = 1 then walls.Opacity <- 0.5
             else walls.Opacity <- 1.0
+        else walls.Opacity <- 1.0
         powerCount <- powerCount - 1
+
+    let mutable flashCount = 0
+    let updateFlash () =
+        if flashCount > 0 then
+            if ((flashCount / 5) % 2) = 1 then (!pacman).Opacity <- 0.5
+            else (!pacman).Opacity <- 1.0
+        else (!pacman).Opacity <- 1.0
+        flashCount <- flashCount - 1 
+
+    let touchGhosts () =
+        let px, py = !x, !y
+        ghosts |> Seq.exists (fun (_,(x,y),_,_) ->
+            ((px >= x && px < x + 13) ||
+             (x < px + 13 && x >= px)) &&
+            ((py >= y && py < y + 13) ||
+             (y < py + 13 && y >= py))
+        )
 
     let update () =
         updatePacman ()
         updateGhosts ()
+        if touchGhosts() then flashCount <- 20
+        updateFlash ()
         updatePower ()
     do run (1.0/50.0) update |> ignore
 
