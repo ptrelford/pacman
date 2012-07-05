@@ -25,8 +25,8 @@ type Keys (control:Control) =
     member keys.IsKeyDown key = keysDown.Contains key
 
 module Seq =
+    let private rand = System.Random()
     let unsort xs =
-        let rand = System.Random()
         xs
         |> Seq.map (fun x -> rand.Next(),x)
         |> Seq.cache
