@@ -149,6 +149,10 @@
     <Content Include="Properties\OutOfBrowserSettings.xml" />
     <Compile Include="PacMan.fs" />
     <Compile Include="App.fs" />
+    <Content Include="Images\eyed.png" />
+    <Content Include="Images\eyel.png" />
+    <Content Include="Images\eyer.png" />
+    <Content Include="Images\eyeu.png" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="mscorlib" />

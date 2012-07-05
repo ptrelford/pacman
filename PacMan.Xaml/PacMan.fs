@@ -72,7 +72,7 @@ module Imaging =
         let bitmap = WriteableBitmap(width, xs.Length, 300.0, 300.0, PixelFormats.Bgra32, null)
         xs |> List.iteri (fun y xs ->
             let line = 
-                Array.init width (fun x ->            
+                Array.init width (fun x ->
                     let bit = 1 <<< (width - 1 - x) 
                     xs &&& bit = bit |> toColor
                 )
@@ -258,11 +258,12 @@ _______7./7 |      ! /7./_______
         ]
         |> List.map (fun (color,(x,y),v) -> 
             let blue = load "blue"
+            let eyes = load "eyeu", load "eyed", load "eyel", load "eyer", blue
             let u, d, l, r =
                 load (color+"u"), load (color+"d"), load (color+"l"), load (color+"r")
-            (u,d,l,r,blue), (x*8-7,y*8-3), v, d
+            eyes, ((u,d,l,r,blue), (x*8-7,y*8-3), v, d)
         )
-    let mutable ghosts = ghost_starts
+    let mutable ghosts = ghost_starts |> List.map snd
     do  ghosts |> List.iter (fun (_,(x,y),_,ghost) -> 
         add ghost
         set ghost (x,y)
@@ -391,9 +392,9 @@ _______7./7 |      ! /7./_______
             then ghosts <- ghosts |> List.mapi (fun i ghost ->
                 if touching |> List.exists ((=) ghost)
                 then 
-                    let (images,_,_,image), (_,(x,y),v,_) = 
+                    let (images,_,_,image), (eyes,(_,(x,y),v,_)) = 
                         ghost, ghost_starts.[i]
-                    (images,(x,y),v,image) 
+                    (eyes,(x,y),v,image) 
                 else ghost
             )
             else flashCount <- 20
