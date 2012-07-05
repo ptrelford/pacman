@@ -248,13 +248,13 @@ _______7./7 |      ! /7./_______
     let isWallAt (x,y) = tileAt x y |> isWall
 
     let load s = sprintf "Images/%s.png" s |> loadImage
-    let p, pu, pd, pl, pr = load "p", load "pu", load "pd", load "pl", load "pr"    
-    let mutable ghosts = 
+    let p, pu, pd, pl, pr = load "p", load "pu", load "pd", load "pl", load "pr"
+    let ghost_starts = 
         [
-        "red", (16, 12), (1,0)
-        "cyan", (14, 16), (1,0)
-        "pink" , (16, 14), (0,-1)
-        "orange" , (18, 16), (-1,0)
+            "red", (16, 12), (1,0)
+            "cyan", (14, 16), (1,0)
+            "pink" , (16, 14), (0,-1)
+            "orange" , (18, 16), (-1,0)
         ]
         |> List.map (fun (color,(x,y),v) -> 
             let blue = load "blue"
@@ -262,6 +262,7 @@ _______7./7 |      ! /7./_______
                 load (color+"u"), load (color+"d"), load (color+"l"), load (color+"r")
             (u,d,l,r,blue), (x*8-7,y*8-3), v, d
         )
+    let mutable ghosts = ghost_starts
     do  ghosts |> List.iter (fun (_,(x,y),_,ghost) -> 
         add ghost
         set ghost (x,y)
@@ -370,11 +371,11 @@ _______7./7 |      ! /7./_______
             if ((flashCount / 5) % 2) = 1 then (!pacman).Opacity <- 0.5
             else (!pacman).Opacity <- 1.0
         else (!pacman).Opacity <- 1.0
-        flashCount <- flashCount - 1 
+        flashCount <- flashCount - 1
 
     let touchGhosts () =
         let px, py = !x, !y
-        ghosts |> Seq.exists (fun (_,(x,y),_,_) ->
+        ghosts |> List.filter (fun (_,(x,y),_,_) ->
             ((px >= x && px < x + 13) ||
              (x < px + 13 && x >= px)) &&
             ((py >= y && py < y + 13) ||
@@ -384,7 +385,18 @@ _______7./7 |      ! /7./_______
     let update () =
         updatePacman ()
         updateGhosts ()
-        if touchGhosts() then flashCount <- 20
+        let touching = touchGhosts()
+        if touching.Length > 0 then
+            if powerCount > 0 
+            then ghosts <- ghosts |> List.mapi (fun i ghost ->
+                if touching |> List.exists ((=) ghost)
+                then 
+                    let (images,_,_,image), (_,(x,y),v,_) = 
+                        ghost, ghost_starts.[i]
+                    (images,(x,y),v,image) 
+                else ghost
+            )
+            else flashCount <- 20
         updateFlash ()
         updatePower ()
     do run (1.0/50.0) update |> ignore
