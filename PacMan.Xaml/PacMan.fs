@@ -111,10 +111,12 @@ type Ghost = {
     Left: Image
     Right: Image
     Blue: Image
+    Eyes : Image * Image * Image * Image
     Image : Image
     X : int
     Y : int
     V : int * int
+    IsReturning : bool
     }
 
 type GameControl() as control = 
@@ -295,10 +297,10 @@ _______7./7 |      ! /7./_______
         ]
         |> List.map (fun (color,(x,y),v) -> 
             let blue = load "blue"
-            let eyes = load "eyeu", load "eyed", load "eyel", load "eyer", blue
+            let eyes = load "eyeu", load "eyed", load "eyel", load "eyer"
             let u, d, l, r =
                 load (color+"u"), load (color+"d"), load (color+"l"), load (color+"r")
-            { Up=u; Down=d; Left=l; Right=r; Blue=blue; X=x*8-7; Y=y*8-3; V=v; Image=d }
+            { Up=u; Down=d; Left=l; Right=r; Blue=blue; Eyes=eyes; X=x*8-7; Y=y*8-3; V=v; Image=d; IsReturning=false }
         )
     let mutable ghosts = ghost_starts
     do  ghosts |> List.iter (fun ghost -> 
@@ -318,6 +320,10 @@ _______7./7 |      ! /7./_______
         let bx, by = int ((x+6+ex)/8), int ((y+6+ey)/8)
         isWallAt (bx,by) |> not
 
+    let fillValue (x,y) (ex,ey) =
+        let bx, by = int ((x+6+ex)/8), int ((y+6+ey)/8)
+        route_home.[by].[bx]
+
     let verticallyAligned (x,y) = x % 8 = 5
     let horizontallyAligned (x,y) = y % 8 = 5
 
@@ -325,6 +331,11 @@ _______7./7 |      ! /7./_______
     let canGoDown (x,y) = verticallyAligned (x,y) && noWall (x,y) (0,5)
     let canGoLeft (x,y) = horizontallyAligned (x,y) && noWall (x,y) (-4,0)
     let canGoRight (x,y) = horizontallyAligned (x,y) && noWall (x,y) (5,0)
+
+    let fillUp (x,y) = fillValue (x,y) (0,-4)
+    let fillDown (x,y) = fillValue (x,y) (0,5)
+    let fillLeft (x,y) = fillValue (x,y) (-4,0)
+    let fillRight (x,y) = fillValue (x,y) (5,0)
 
     let go (x,y) (dx,dy) =
         let x = 
@@ -337,33 +348,46 @@ _______7./7 |      ! /7./_______
         ghosts |> List.map (fun ghost ->
             let x, y = ghost.X, ghost.Y
             let dx, dy = ghost.V
-            let face, canMove =
+            let u,d,l,r = ghost.Eyes
+            let face, eye, canMove =
                 match dx, dy with
-                | 0,-1 -> ghost.Up, canGoUp (x,y)
-                | 0, 1 -> ghost.Down, canGoDown (x,y)
-                | -1,0 -> ghost.Left, canGoLeft (x,y)
-                | 1, 0 -> ghost.Right, canGoRight (x,y)
+                | 0,-1 -> ghost.Up, u, canGoUp (x,y)
+                | 0, 1 -> ghost.Down, d, canGoDown (x,y)
+                | -1,0 -> ghost.Left, l, canGoLeft (x,y)
+                | 1, 0 -> ghost.Right, r, canGoRight (x,y)
                 | _, _ -> invalidOp ""
             let isBackwards (a,b) =
                 (a <> 0 && a = -dx) || (b <> 0 && b = -dy)
             let directions = 
                 [
-                if canGoUp (x,y) then yield (0,-1)
-                if canGoDown (x,y) then yield (0,1)
-                if canGoLeft (x,y) then yield (-1,0)
-                if canGoRight(x,y) then yield (1,0)
+                if canGoUp (x,y) then yield (0,-1), fillUp (x,y)
+                if canGoDown (x,y) then yield (0,1), fillDown (x,y)
+                if canGoLeft (x,y) then yield (-1,0), fillLeft (x,y)
+                if canGoRight(x,y) then yield (1,0), fillRight (x,y)
                 ]
-                |> Seq.unsort
-                |> Seq.sortBy isBackwards
+            let directions =
+                if ghost.IsReturning then
+                    directions
+                    |> Seq.sortBy snd
+                    |> Seq.map fst
+                    |> Seq.sortBy isBackwards
+                else
+                    directions
+                    |> Seq.map fst
+                    |> Seq.unsort
+                    |> Seq.sortBy isBackwards
             let dx, dy = 
-                let newDirection = directions |> Seq.head
+                let newDirection = 
+                    directions |> Seq.head
                 if not <| isBackwards newDirection 
                 then newDirection
                 else dx,dy
             let x,y = go (x,y) (dx,dy)
             remove ghost.Image
             let face = 
-                if powerCount > 0 then ghost.Blue else face
+                if ghost.IsReturning then eye
+                else
+                    if powerCount > 0 then ghost.Blue else face
             add face
             set face (x,y)
             { ghost with X = x; Y = y; V = (dx,dy); Image = face }
@@ -434,7 +458,7 @@ _______7./7 |      ! /7./_______
                 if touching |> List.exists ((=) ghost)
                 then  
                     let ghost' = ghost_starts.[i]
-                    { ghost with X = ghost'.X; Y = ghost'.Y } 
+                    { ghost with IsReturning = true; } // ghost'.X; Y = ghost'.Y } 
                 else ghost
             )
             else flashCount <- 20
