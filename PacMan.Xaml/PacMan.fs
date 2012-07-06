@@ -24,6 +24,18 @@ type Keys (control:Control) =
     do  control.LostFocus.Add (fun _ -> keysDown <- Set.empty)
     member keys.IsKeyDown key = keysDown.Contains key
 
+[<AutoOpen>]
+module Algorithm =
+    let flood canFill fill (x,y) =
+        let rec f n = function
+            | [] -> ()
+            | ps ->
+                let ps = ps |> List.filter canFill
+                ps |> List.iter (fill n)
+                ps |> List.collect (fun (x,y) -> [(x-1,y);(x+1,y);(x,y-1);(x,y+1)])
+                |> f (n+1)
+        f 0 [(x,y)]
+
 module Seq =
     let private rand = System.Random()
     let unsort xs =
@@ -240,6 +252,19 @@ _______7./7 |      ! /7./_______
                 tile
             )
         )
+    let route_home =
+        let numbers =
+            lines |> Array.map (fun line ->
+                line.ToCharArray() 
+                |> Array.map (fun c -> if isWall c then Int32.MaxValue else -1)
+            )
+        let canFill (x,y) =
+            y>=0 && y < numbers.Length &&
+            x>=0 && x < numbers.[y].Length &&
+            numbers.[y].[x] = -1
+        let fill n (x,y) = numbers.[y].[x] <- n
+        flood canFill fill (16,16)
+        numbers
 
     let tileAt x y =
         if x < 0 || x > 30 then ' '
