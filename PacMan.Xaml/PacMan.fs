@@ -105,6 +105,18 @@ module Imaging =
         #endif
         image |> toImage
 
+type Ghost = {
+    Up: Image
+    Down: Image
+    Left: Image
+    Right: Image
+    Blue: Image
+    Image : Image
+    X : int
+    Y : int
+    V : int * int
+    }
+
 type GameControl() as control = 
     inherit UserControl(Background=SolidColorBrush Colors.Black)
     do control.RenderTransform <- ScaleTransform(ScaleX=1.5,ScaleY=1.5)
@@ -286,12 +298,12 @@ _______7./7 |      ! /7./_______
             let eyes = load "eyeu", load "eyed", load "eyel", load "eyer", blue
             let u, d, l, r =
                 load (color+"u"), load (color+"d"), load (color+"l"), load (color+"r")
-            eyes, ((u,d,l,r,blue), (x*8-7,y*8-3), v, d)
+            { Up=u; Down=d; Left=l; Right=r; Blue=blue; X=x*8-7; Y=y*8-3; V=v; Image=d }
         )
-    let mutable ghosts = ghost_starts |> List.map snd
-    do  ghosts |> List.iter (fun (_,(x,y),_,ghost) -> 
-        add ghost
-        set ghost (x,y)
+    let mutable ghosts = ghost_starts
+    do  ghosts |> List.iter (fun ghost -> 
+        add ghost.Image
+        set ghost.Image (ghost.X,ghost.Y)
         )
 
     let pacman = ref p
@@ -322,13 +334,15 @@ _______7./7 |      ! /7./_______
         x + dx, y + dy
 
     let newGhosts () =
-        ghosts |> List.map (fun ((u,d,l,r,blue),(x,y),(dx,dy),g) ->
+        ghosts |> List.map (fun ghost ->
+            let x, y = ghost.X, ghost.Y
+            let dx, dy = ghost.V
             let face, canMove =
-                match dx,dy with
-                | 0,-1 -> u, canGoUp (x,y)
-                | 0, 1 -> d, canGoDown (x,y)
-                | -1,0 -> l, canGoLeft (x,y)
-                | 1, 0 -> r, canGoRight (x,y)
+                match dx, dy with
+                | 0,-1 -> ghost.Up, canGoUp (x,y)
+                | 0, 1 -> ghost.Down, canGoDown (x,y)
+                | -1,0 -> ghost.Left, canGoLeft (x,y)
+                | 1, 0 -> ghost.Right, canGoRight (x,y)
                 | _, _ -> invalidOp ""
             let isBackwards (a,b) =
                 (a <> 0 && a = -dx) || (b <> 0 && b = -dy)
@@ -347,11 +361,12 @@ _______7./7 |      ! /7./_______
                 then newDirection
                 else dx,dy
             let x,y = go (x,y) (dx,dy)
-            remove g
-            let face = if powerCount > 0 then blue else face
+            remove ghost.Image
+            let face = 
+                if powerCount > 0 then ghost.Blue else face
             add face
             set face (x,y)
-            (u,d,l,r,blue),(x,y),(dx,dy),face
+            { ghost with X = x; Y = y; V = (dx,dy); Image = face }
         )
 
     let updateGhosts () = ghosts <- newGhosts ()
@@ -401,7 +416,8 @@ _______7./7 |      ! /7./_______
 
     let touchGhosts () =
         let px, py = !x, !y
-        ghosts |> List.filter (fun (_,(x,y),_,_) ->
+        ghosts |> List.filter (fun ghost ->
+            let x,y = ghost.X, ghost.Y
             ((px >= x && px < x + 13) ||
              (x < px + 13 && x >= px)) &&
             ((py >= y && py < y + 13) ||
@@ -416,10 +432,9 @@ _______7./7 |      ! /7./_______
             if powerCount > 0 
             then ghosts <- ghosts |> List.mapi (fun i ghost ->
                 if touching |> List.exists ((=) ghost)
-                then 
-                    let (images,_,_,image), (eyes,(_,(x,y),v,_)) = 
-                        ghost, ghost_starts.[i]
-                    (eyes,(x,y),v,image) 
+                then  
+                    let ghost' = ghost_starts.[i]
+                    { ghost with X = ghost'.X; Y = ghost'.Y } 
                 else ghost
             )
             else flashCount <- 20
