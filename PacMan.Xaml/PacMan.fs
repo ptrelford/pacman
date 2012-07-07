@@ -118,7 +118,9 @@ type Ghost = {
 
 type GameControl() as control = 
     inherit UserControl(Background=SolidColorBrush Colors.Black)
+#if SILVERLIGHT
     do control.RenderTransform <- ScaleTransform(ScaleX=1.5,ScaleY=1.5)
+#endif
     let maze = "
 ##/------------7/------------7##
 ##|............|!............|##
@@ -460,7 +462,7 @@ _______7./7 |      ! /7./_______
                 if touching |> List.exists ((=) ghost)
                 then  
                     let ghost' = ghost_starts.[i]
-                    { ghost with IsReturning = true; } // ghost'.X; Y = ghost'.Y } 
+                    { ghost with IsReturning = true; }
                 else ghost
             )
             else flashCount <- 20
