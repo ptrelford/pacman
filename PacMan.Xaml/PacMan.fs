@@ -106,12 +106,9 @@ module Imaging =
         image |> toImage
 
 type Ghost = {
-    Up: Image
-    Down: Image
-    Left: Image
-    Right: Image
-    Blue: Image
+    Blue : Image
     Eyes : Image * Image * Image * Image
+    Body : Image * Image * Image * Image
     Image : Image
     X : int
     Y : int
@@ -298,9 +295,9 @@ _______7./7 |      ! /7./_______
         |> List.map (fun (color,(x,y),v) -> 
             let blue = load "blue"
             let eyes = load "eyeu", load "eyed", load "eyel", load "eyer"
-            let u, d, l, r =
-                load (color+"u"), load (color+"d"), load (color+"l"), load (color+"r")
-            { Up=u; Down=d; Left=l; Right=r; Blue=blue; Eyes=eyes; X=x*8-7; Y=y*8-3; V=v; Image=d; IsReturning=false }
+            let body = load (color+"u"), load (color+"d"), load (color+"l"), load (color+"r")
+            let _,image,_,_ = body
+            { Blue=blue; Eyes=eyes; Body=body; X=x*8-7; Y=y*8-3; V=v; Image=image; IsReturning=false }
         )
     let mutable ghosts = ghost_starts
     do  ghosts |> List.iter (fun ghost -> 
@@ -348,13 +345,14 @@ _______7./7 |      ! /7./_______
         ghosts |> List.map (fun ghost ->
             let x, y = ghost.X, ghost.Y
             let dx, dy = ghost.V
-            let u,d,l,r = ghost.Eyes
+            let u,d,l,r = ghost.Body
+            let u',d',l',r' = ghost.Eyes
             let face, eye, canMove =
                 match dx, dy with
-                | 0,-1 -> ghost.Up, u, canGoUp (x,y)
-                | 0, 1 -> ghost.Down, d, canGoDown (x,y)
-                | -1,0 -> ghost.Left, l, canGoLeft (x,y)
-                | 1, 0 -> ghost.Right, r, canGoRight (x,y)
+                | 0,-1 -> u, u', canGoUp (x,y)
+                | 0, 1 -> d, d', canGoDown (x,y)
+                | -1,0 -> l, l', canGoLeft (x,y)
+                | 1, 0 -> r, r', canGoRight (x,y)
                 | _, _ -> invalidOp ""
             let isBackwards (a,b) =
                 (a <> 0 && a = -dx) || (b <> 0 && b = -dy)
@@ -383,6 +381,10 @@ _______7./7 |      ! /7./_______
                 then newDirection
                 else dx,dy
             let x,y = go (x,y) (dx,dy)
+            let returning =
+                if ghost.IsReturning && 0 = (fillValue (x,y) (0,0))
+                then false
+                else ghost.IsReturning
             remove ghost.Image
             let face = 
                 if ghost.IsReturning then eye
@@ -390,7 +392,7 @@ _______7./7 |      ! /7./_______
                     if powerCount > 0 then ghost.Blue else face
             add face
             set face (x,y)
-            { ghost with X = x; Y = y; V = (dx,dy); Image = face }
+            { ghost with X = x; Y = y; V = (dx,dy); Image = face; IsReturning = returning }
         )
 
     let updateGhosts () = ghosts <- newGhosts ()
