@@ -12,6 +12,27 @@ open System.Windows.Input
 open System.Windows.Media
 open System.Windows.Media.Imaging
 
+type Paint = { R:byte; G:byte; B:byte; A:byte }
+
+type IScene =
+    abstract member AddLayer : unit -> ILayer
+    abstract member CreateBitmap : Color * int list -> IBitmap
+    abstract member LoadBitmap : string -> IBitmap
+    abstract member Contents : IContents
+and  IContents = 
+    abstract member Add : IContent -> unit
+    abstract member Remove : IContent -> unit
+    abstract member Contains: IContent -> bool
+and IContent =
+    abstract member Control : obj
+    abstract member Move : float * float -> unit
+    abstract member SetOpacity : float -> unit
+and IBitmap =
+    abstract member CreateContent : unit -> IContent
+and ILayer =
+    inherit IContent
+    abstract member Contents : IContents
+
 type Keys (control:Control) =
     #if SILVERLIGHT
     #else // WPF specific workaround
@@ -118,17 +139,18 @@ module Imaging =
         path |> loadBitmap |> toImage
 
 type Ghost = {
-    Blue : Image
-    Eyes : Image * Image * Image * Image
-    Body : Image * Image * Image * Image
-    Image : Image
+    Blue : IContent
+    Eyes : IContent * IContent * IContent * IContent
+    Body : IContent * IContent * IContent * IContent
+    Image : IContent
     X : int
     Y : int
     V : int * int
     IsReturning : bool
     }
 
-type Game(canvas:Canvas, keys:Keys) =
+type Game(scene:IScene, keys:Keys) =
+    let toBitmap color lines = scene.CreateBitmap(color,lines)
     let maze = "
 ##/------------7/------------7##
 ##|............|!............|##
@@ -248,14 +270,13 @@ _______7./7 |      ! /7./_______
         | '_' | '|' | '!' | '/' | '7' | 'L' | 'J' | '-' | '*' -> true
         | _ -> false
 
-    let set element (x,y) =
-        Canvas.SetLeft(element, x - 16 |> float)
-        Canvas.SetTop(element, y + 16 |> float)
+    let set (element:IContent) (x,y) =
+        element.Move(x - 16 |> float, y + 16 |> float)
 
-    let add item = canvas.Children.Add(item) |> ignore
-    let remove item = canvas.Children.Remove(item) |> ignore
-    let walls = Canvas()
-    do  add walls
+    let toImage (bitmap:IBitmap) = bitmap.CreateContent() 
+    let add item = scene.Contents.Add(item)
+    let remove item = scene.Contents.Remove(item)
+    let walls = scene.AddLayer()
 
     let lines = maze.Split('\n')
     let tiles =
@@ -264,8 +285,8 @@ _______7./7 |      ! /7./_______
                 let tile = toTile item |> toImage
                 set tile (x * 8, y * 8)
                 if isWall item 
-                then walls.Children.Add tile |> ignore
-                else canvas.Children.Add tile |> ignore
+                then walls.Contents.Add tile |> ignore
+                else scene.Contents.Add tile |> ignore
                 tile
             )
         )
@@ -289,15 +310,12 @@ _______7./7 |      ! /7./_______
 
     let isWallAt (x,y) = tileAt x y |> isWall
 
-    let load s = sprintf "Images/%s.png" s |> loadImage
+    let load s = 
+        let bitmap = sprintf "Images/%s.png" s |> scene.LoadBitmap
+        bitmap.CreateContent()
     let p, pu, pd, pl, pr = load "p", load "pu", load "pd", load "pl", load "pr"
     let lives = [for _ in 1..2 -> load "pl"]
     do  lives |> List.iteri (fun i life -> add life; set life (16+16*i,32*8))
-
-    let p1 = createTextBlock()
-    do  p1.Text <- "1UP"; set p1 (6*8,-16); add p1
-    let s1 = createTextBlock()
-    do  s1.Text <- "00"; set s1 (7*8,-8); add s1
 
     let ghost_starts = 
         [
@@ -433,24 +451,24 @@ _______7./7 |      ! /7./_______
         if tileAt tx ty = '.' then
             remove (tiles.[ty].[tx])
         if tileAt tx ty = 'o' then
-            if canvas.Children.Contains (tiles.[ty].[tx]) then
+            if scene.Contents.Contains (tiles.[ty].[tx]) then
                 powerCount <- 500
             remove (tiles.[ty].[tx])
         set !pacman (!x,!y)
 
     let updatePower () =
         if powerCount > 0 then
-            if (powerCount/5) % 2 = 1 then walls.Opacity <- 0.5
-            else walls.Opacity <- 1.0
-        else walls.Opacity <- 1.0
+            if (powerCount/5) % 2 = 1 then walls.SetOpacity(0.5)
+            else walls.SetOpacity(1.0)
+        else walls.SetOpacity(1.0)
         powerCount <- powerCount - 1
 
     let mutable flashCount = 0
     let updateFlash () =
         if flashCount > 0 then
-            if ((flashCount / 5) % 2) = 1 then (!pacman).Opacity <- 0.5
-            else (!pacman).Opacity <- 1.0
-        else (!pacman).Opacity <- 1.0
+            if ((flashCount / 5) % 2) = 1 then (!pacman).SetOpacity(0.5)
+            else (!pacman).SetOpacity(1.0)
+        else (!pacman).SetOpacity(1.0)
         flashCount <- flashCount - 1
 
     let touchGhosts () =
@@ -480,6 +498,53 @@ _______7./7 |      ! /7./_______
         updateFlash ()
         updatePower ()
     member this.Update () = update ()
+
+type Scene (canvas:Canvas) =
+    let contents = Contents(canvas)
+    interface IScene with
+        member scene.AddLayer () = 
+            let layer = Canvas()
+            canvas.Children.Add(layer)
+            Layer(layer) :> ILayer
+        member scene.LoadBitmap(path) = 
+            let bitmap = loadBitmap path
+            Bitmap(bitmap) :> IBitmap
+        member scene.CreateBitmap(color,lines) = 
+            let bitmap = toBitmap color lines
+            Bitmap(bitmap) :> IBitmap
+        member scene.Contents = contents :> IContents
+and  Bitmap (source:BitmapSource) =
+    interface IBitmap with
+        member bitmap.CreateContent() =
+            let w, h = float source.PixelWidth, float source.PixelHeight  
+            let image = Image(Source=source,Stretch=Stretch.Fill,Width=w,Height=h)
+            Content(image) :> IContent
+and  Contents (canvas:Canvas) =
+    inherit Content(canvas)
+    let children = canvas.Children
+    interface IContents with
+        member contents.Add content = 
+            children.Add(content.Control :?> UIElement) |> ignore
+        member contents.Remove content = 
+            children.Remove(content.Control :?> UIElement) |> ignore
+        member contents.Contains content =
+            children.Contains(content.Control :?> UIElement)
+and  Layer (canvas:Canvas) =
+    let content = Content(canvas) :> IContent
+    let contents = Contents(canvas) :> IContents
+    interface ILayer with
+        member this.Move(x,y) = content.Move(x,y)
+        member this.SetOpacity(value) = content.SetOpacity(value)
+        member this.Control = canvas :> obj
+        member this.Contents = contents
+and  Content (element:UIElement) =
+    interface IContent with
+        member content.Move (x,y) =
+            Canvas.SetLeft(element, x)
+            Canvas.SetTop(element, y)
+        member content.SetOpacity (value) = 
+            element.Opacity <- value
+        member content.Control = element :> obj
  
 type GameControl () as control =
     inherit UserControl(Background=SolidColorBrush Colors.Black)
@@ -493,7 +558,16 @@ type GameControl () as control =
     do  canvas.Clip <- g
     do  control.Width <- canvas.Width; control.Height <- canvas.Height
     do  control.Content <- canvas
-    let game = Game(canvas, keys)
+    let scene = Scene(canvas) :> IScene
+    let p1 = createTextBlock()
+    do  p1.Text <- "1UP"
+    let p1 = Content(p1) :> IContent
+    do  p1.Move(2.0*8.0,0.0); scene.Contents.Add(p1)
+    let s1 = createTextBlock()
+    do  s1.Text <- "00"
+    let s1 = Content(s1) :> IContent
+    do  s1.Move(3.0*8.0,8.0); scene.Contents.Add(s1)
+    let game = Game(scene, keys)
     do run (1.0/50.0) game.Update |> ignore
 
 (*[omit:Run script on TryFSharp.org]*)
