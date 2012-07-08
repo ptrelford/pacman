@@ -46,7 +46,17 @@ module Seq =
         |> Seq.map snd
 
 [<AutoOpen>]
-module Game = 
+module Text =
+    let whiteBrush = SolidColorBrush Colors.White
+    let createTextBlock () =
+        TextBlock(
+            Foreground=whiteBrush, 
+            FontSize=8.0,
+            FontWeight=FontWeights.ExtraBold
+            )
+
+[<AutoOpen>]
+module Rendering = 
     let run rate update =
         let rate = TimeSpan.FromSeconds(rate)
         let lastUpdate = ref DateTime.Now
@@ -95,7 +105,7 @@ module Imaging =
     let toImage (bitmap:#BitmapSource) =
         let w, h = float bitmap.PixelWidth, float bitmap.PixelHeight  
         Image(Source=bitmap,Stretch=Stretch.Fill,Width=w,Height=h) 
-    let loadImage path =
+    let loadBitmap path =
         #if SILVERLIGHT
         let stream = Application.GetResourceStream(new Uri(path, UriKind.Relative)).Stream
         let image = BitmapImage()
@@ -103,7 +113,9 @@ module Imaging =
         #else
         let image = BitmapImage(Uri(path, UriKind.Relative))
         #endif
-        image |> toImage
+        image
+    let loadImage path =
+        path |> loadBitmap |> toImage
 
 type Ghost = {
     Blue : Image
@@ -116,11 +128,7 @@ type Ghost = {
     IsReturning : bool
     }
 
-type GameControl() as control = 
-    inherit UserControl(Background=SolidColorBrush Colors.Black)
-#if SILVERLIGHT
-    do control.RenderTransform <- ScaleTransform(ScaleX=1.5,ScaleY=1.5)
-#endif
+type Game(canvas:Canvas, keys:Keys) =
     let maze = "
 ##/------------7/------------7##
 ##|............|!............|##
@@ -242,17 +250,13 @@ _______7./7 |      ! /7./_______
 
     let set element (x,y) =
         Canvas.SetLeft(element, x - 16 |> float)
-        Canvas.SetTop(element, y |> float)
-    let canvas = Canvas(Background = SolidColorBrush Colors.Black)
-    let walls = Canvas()
-    do  canvas.Width <- 28.0 * 8.0; canvas.Height <- 32.0 * 8.0
-    let g = RectangleGeometry(Rect=Rect(Width=canvas.Width,Height=canvas.Height))
-    do  canvas.Clip <- g
+        Canvas.SetTop(element, y + 16 |> float)
+
     let add item = canvas.Children.Add(item) |> ignore
     let remove item = canvas.Children.Remove(item) |> ignore
+    let walls = Canvas()
     do  add walls
-    do  control.Width <- canvas.Width; control.Height <- canvas.Height
-    do  control.Content <- canvas
+
     let lines = maze.Split('\n')
     let tiles =
         lines |> Array.mapi (fun y line ->
@@ -287,6 +291,14 @@ _______7./7 |      ! /7./_______
 
     let load s = sprintf "Images/%s.png" s |> loadImage
     let p, pu, pd, pl, pr = load "p", load "pu", load "pd", load "pl", load "pr"
+    let lives = [for _ in 1..2 -> load "pl"]
+    do  lives |> List.iteri (fun i life -> add life; set life (16+16*i,32*8))
+
+    let p1 = createTextBlock()
+    do  p1.Text <- "1UP"; set p1 (6*8,-16); add p1
+    let s1 = createTextBlock()
+    do  s1.Text <- "00"; set s1 (7*8,-8); add s1
+
     let ghost_starts = 
         [
             "red", (16, 12), (1,0)
@@ -311,7 +323,6 @@ _______7./7 |      ! /7./_______
     do  add !pacman
     let mutable powerCount = 0
 
-    let keys = Keys(control)
     let x = ref (16 * 8 - 7)
     let y = ref (24 * 8 - 3)
 
@@ -468,7 +479,22 @@ _______7./7 |      ! /7./_______
             else flashCount <- 20
         updateFlash ()
         updatePower ()
-    do run (1.0/50.0) update |> ignore
+    member this.Update () = update ()
+ 
+type GameControl () as control =
+    inherit UserControl(Background=SolidColorBrush Colors.Black)
+#if SILVERLIGHT
+    do control.RenderTransform <- ScaleTransform(ScaleX=1.5,ScaleY=1.5)
+#endif
+    let keys = Keys(control)
+    let canvas = Canvas(Background = SolidColorBrush Colors.Black)
+    do  canvas.Width <- 28.0 * 8.0; canvas.Height <- (32.0+4.0) * 8.0
+    let g = RectangleGeometry(Rect=Rect(Width=canvas.Width,Height=canvas.Height))
+    do  canvas.Clip <- g
+    do  control.Width <- canvas.Width; control.Height <- canvas.Height
+    do  control.Content <- canvas
+    let game = Game(canvas, keys)
+    do run (1.0/50.0) game.Update |> ignore
 
 (*[omit:Run script on TryFSharp.org]*)
 #if INTERACTIVE
