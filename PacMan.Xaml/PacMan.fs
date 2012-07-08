@@ -66,78 +66,6 @@ module Seq =
         |> Seq.sortBy fst
         |> Seq.map snd
 
-[<AutoOpen>]
-module Text =
-    let whiteBrush = SolidColorBrush Colors.White
-    let createTextBlock () =
-        TextBlock(
-            Foreground=whiteBrush, 
-            FontSize=8.0,
-            FontWeight=FontWeights.ExtraBold
-            )
-
-[<AutoOpen>]
-module Rendering = 
-    let run rate update =
-        let rate = TimeSpan.FromSeconds(rate)
-        let lastUpdate = ref DateTime.Now
-        let residual = ref (TimeSpan())
-        CompositionTarget.Rendering.Subscribe (fun _ -> 
-            let now = DateTime.Now
-            residual := !residual + (now - !lastUpdate)
-            while !residual > rate do
-                update(); residual := !residual - rate
-            lastUpdate := now
-        )    
-    
-[<AutoOpen>]
-module Imaging =
-    let private toInt (color:Color) = 
-        (int color.A <<< 24) ||| 
-        (int color.R <<< 16) ||| 
-        (int color.G <<< 8)  ||| 
-        int color.B
-    let toBitmap color (xs:int list) =
-        let width = 8
-        let white = color |> toInt
-        let black = 0x00000000
-        let toColor = function true -> white | false -> black
-#if SILVERLIGHT        
-        let bitmap = WriteableBitmap(width, xs.Length)
-        let pixels = bitmap.Pixels
-        xs |> List.iteri (fun y xs ->
-            for x = 0 to width-1 do
-                let bit = 1 <<< (width - 1 - x) 
-                pixels.[x+y*width] <- xs &&& bit = bit |> toColor
-        )
-        bitmap
-#else
-        let bitmap = WriteableBitmap(width, xs.Length, 300.0, 300.0, PixelFormats.Bgra32, null)
-        xs |> List.iteri (fun y xs ->
-            let line = 
-                Array.init width (fun x ->
-                    let bit = 1 <<< (width - 1 - x) 
-                    xs &&& bit = bit |> toColor
-                )
-            bitmap.WritePixels(Int32Rect(0,0,width,1), line, width*4, 0 , y)
-        )  
-        bitmap
-#endif
-    let toImage (bitmap:#BitmapSource) =
-        let w, h = float bitmap.PixelWidth, float bitmap.PixelHeight  
-        Image(Source=bitmap,Stretch=Stretch.Fill,Width=w,Height=h) 
-    let loadBitmap path =
-        #if SILVERLIGHT
-        let stream = Application.GetResourceStream(new Uri(path, UriKind.Relative)).Stream
-        let image = BitmapImage()
-        image.SetSource(stream)
-        #else
-        let image = BitmapImage(Uri(path, UriKind.Relative))
-        #endif
-        image
-    let loadImage path =
-        path |> loadBitmap |> toImage
-
 type Ghost = {
     Blue : IContent
     Eyes : IContent * IContent * IContent * IContent
@@ -151,6 +79,11 @@ type Ghost = {
 
 type Game(scene:IScene, keys:Keys) =
     let toBitmap color lines = scene.CreateBitmap(color,lines)
+    let toImage (bitmap:IBitmap) = bitmap.CreateContent() 
+    let load s = sprintf "Images/%s.png" s |> scene.LoadBitmap |> toImage
+    let add item = scene.Contents.Add(item)
+    let remove item = scene.Contents.Remove(item)
+    let set (element:IContent) (x,y) = element.Move(x - 16 |> float, y + 16 |> float)
     let maze = "
 ##/------------7/------------7##
 ##|............|!............|##
@@ -270,14 +203,7 @@ _______7./7 |      ! /7./_______
         | '_' | '|' | '!' | '/' | '7' | 'L' | 'J' | '-' | '*' -> true
         | _ -> false
 
-    let set (element:IContent) (x,y) =
-        element.Move(x - 16 |> float, y + 16 |> float)
-
-    let toImage (bitmap:IBitmap) = bitmap.CreateContent() 
-    let add item = scene.Contents.Add(item)
-    let remove item = scene.Contents.Remove(item)
     let walls = scene.AddLayer()
-
     let lines = maze.Split('\n')
     let tiles =
         lines |> Array.mapi (fun y line ->
@@ -309,10 +235,6 @@ _______7./7 |      ! /7./_______
         else lines.[y].[x]
 
     let isWallAt (x,y) = tileAt x y |> isWall
-
-    let load s = 
-        let bitmap = sprintf "Images/%s.png" s |> scene.LoadBitmap
-        bitmap.CreateContent()
     let p, pu, pd, pl, pr = load "p", load "pu", load "pd", load "pl", load "pr"
     let lives = [for _ in 1..2 -> load "pl"]
     do  lives |> List.iteri (fun i life -> add life; set life (16+16*i,32*8))
@@ -497,14 +419,87 @@ _______7./7 |      ! /7./_______
             else flashCount <- 20
         updateFlash ()
         updatePower ()
+
     member this.Update () = update ()
+
+[<AutoOpen>]
+module Text =
+    let whiteBrush = SolidColorBrush Colors.White
+    let createTextBlock () =
+        TextBlock(
+            Foreground=whiteBrush, 
+            FontSize=8.0,
+            FontWeight=FontWeights.ExtraBold
+            )
+
+[<AutoOpen>]
+module Rendering = 
+    let run rate update =
+        let rate = TimeSpan.FromSeconds(rate)
+        let lastUpdate = ref DateTime.Now
+        let residual = ref (TimeSpan())
+        CompositionTarget.Rendering.Subscribe (fun _ -> 
+            let now = DateTime.Now
+            residual := !residual + (now - !lastUpdate)
+            while !residual > rate do
+                update(); residual := !residual - rate
+            lastUpdate := now
+        )
+    
+[<AutoOpen>]
+module Imaging =
+    let private toInt (color:Color) = 
+        (int color.A <<< 24) ||| 
+        (int color.R <<< 16) ||| 
+        (int color.G <<< 8)  ||| 
+        int color.B
+    let toBitmap color (xs:int list) =
+        let width = 8
+        let white = color |> toInt
+        let black = 0x00000000
+        let toColor = function true -> white | false -> black
+#if SILVERLIGHT        
+        let bitmap = WriteableBitmap(width, xs.Length)
+        let pixels = bitmap.Pixels
+        xs |> List.iteri (fun y xs ->
+            for x = 0 to width-1 do
+                let bit = 1 <<< (width - 1 - x) 
+                pixels.[x+y*width] <- xs &&& bit = bit |> toColor
+        )
+        bitmap
+#else
+        let bitmap = WriteableBitmap(width, xs.Length, 300.0, 300.0, PixelFormats.Bgra32, null)
+        xs |> List.iteri (fun y xs ->
+            let line = 
+                Array.init width (fun x ->
+                    let bit = 1 <<< (width - 1 - x) 
+                    xs &&& bit = bit |> toColor
+                )
+            bitmap.WritePixels(Int32Rect(0,0,width,1), line, width*4, 0 , y)
+        )  
+        bitmap
+#endif
+    let toImage (bitmap:#BitmapSource) =
+        let w, h = float bitmap.PixelWidth, float bitmap.PixelHeight  
+        Image(Source=bitmap,Stretch=Stretch.Fill,Width=w,Height=h) 
+    let loadBitmap path =
+        #if SILVERLIGHT
+        let stream = Application.GetResourceStream(new Uri(path, UriKind.Relative)).Stream
+        let image = BitmapImage()
+        image.SetSource(stream)
+        #else
+        let image = BitmapImage(Uri(path, UriKind.Relative))
+        #endif
+        image
+    let loadImage path =
+        path |> loadBitmap |> toImage
 
 type Scene (canvas:Canvas) =
     let contents = Contents(canvas)
     interface IScene with
         member scene.AddLayer () = 
             let layer = Canvas()
-            canvas.Children.Add(layer)
+            canvas.Children.Add(layer) |> ignore
             Layer(layer) :> ILayer
         member scene.LoadBitmap(path) = 
             let bitmap = loadBitmap path
