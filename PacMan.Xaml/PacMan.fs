@@ -5,18 +5,16 @@ namespace PacMan
 #endif
 (*[/omit]*)
 
-open System
-open System.Windows
-open System.Windows.Controls
-open System.Windows.Input
-open System.Windows.Media
-open System.Windows.Media.Imaging
-
-type Paint = { R:byte; G:byte; B:byte; A:byte }
+type Paint(aarrggbb:int) =
+    static member White = Paint(0xFFFFFFFF)
+    static member Blue = Paint(0xFF0000FF)
+    static member Yellow = Paint(0xFFFFFF00)
+    static member Transparent = Paint(0x00FFFFFF)
+    member this.Color = aarrggbb 
 
 type IScene =
     abstract member AddLayer : unit -> ILayer
-    abstract member CreateBitmap : Color * int list -> IBitmap
+    abstract member CreateBitmap : Paint * int list -> IBitmap
     abstract member LoadBitmap : string -> IBitmap
     abstract member Contents : IContents
 and  IContents = 
@@ -32,6 +30,13 @@ and IBitmap =
 and ILayer =
     inherit IContent
     abstract member Contents : IContents
+
+open System
+open System.Windows
+open System.Windows.Controls
+open System.Windows.Input
+open System.Windows.Media
+open System.Windows.Media.Imaging
 
 type Keys (control:Control) =
     #if SILVERLIGHT
@@ -173,16 +178,16 @@ _______7./7 |      ! /7./_______
         0b00000000]
 
     let fromTriple xs = 
-        let convert = toBitmap Colors.Blue
+        let convert = toBitmap Paint.Blue
         List.foldBack (fun (l,m,r) (ls,ms,rs) -> l::ls, m::ms, r::rs) xs ([],[],[])
         |> fun (l,m,r) -> convert l, convert m, convert r
 
     let tl, top, tr         = fromTriple tops
     let left, blank, right  = fromTriple mids
     let bl, bottom, br      = fromTriple bots
-    let door = toBitmap Colors.White door'
-    let pill = toBitmap Colors.Yellow pill'
-    let power = toBitmap Colors.Yellow power'
+    let door = toBitmap Paint.White door'
+    let pill = toBitmap Paint.Yellow pill'
+    let power = toBitmap Paint.Yellow power'
 
     let toTile c =
         match c with
@@ -448,14 +453,9 @@ module Rendering =
     
 [<AutoOpen>]
 module Imaging =
-    let private toInt (color:Color) = 
-        (int color.A <<< 24) ||| 
-        (int color.R <<< 16) ||| 
-        (int color.G <<< 8)  ||| 
-        int color.B
-    let toBitmap color (xs:int list) =
+    let toBitmap (paint:Paint) (xs:int list) =
         let width = 8
-        let white = color |> toInt
+        let white = paint.Color
         let black = 0x00000000
         let toColor = function true -> white | false -> black
 #if SILVERLIGHT        
@@ -504,8 +504,8 @@ type Scene (canvas:Canvas) =
         member scene.LoadBitmap(path) = 
             let bitmap = loadBitmap path
             Bitmap(bitmap) :> IBitmap
-        member scene.CreateBitmap(color,lines) = 
-            let bitmap = toBitmap color lines
+        member scene.CreateBitmap(paint,lines) = 
+            let bitmap = toBitmap paint lines
             Bitmap(bitmap) :> IBitmap
         member scene.Contents = contents :> IContents
 and  Bitmap (source:BitmapSource) =
