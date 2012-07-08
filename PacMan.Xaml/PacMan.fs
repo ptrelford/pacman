@@ -31,24 +31,11 @@ and ILayer =
     inherit IContent
     abstract member Contents : IContents
 
-open System
-open System.Windows
-open System.Windows.Controls
-open System.Windows.Input
-open System.Windows.Media
-open System.Windows.Media.Imaging
-
-type Keys (control:Control) =
-    #if SILVERLIGHT
-    #else // WPF specific workaround
-    do  control.Focusable <- true
-    do  control.Focus() |> ignore
-    #endif
-    let mutable keysDown = Set.empty  
-    do  control.KeyDown.Add (fun e -> keysDown <- keysDown.Add e.Key)
-    do  control.KeyUp.Add (fun e -> keysDown <- keysDown.Remove e.Key)
-    do  control.LostFocus.Add (fun _ -> keysDown <- Set.empty)
-    member keys.IsKeyDown key = keysDown.Contains key
+type IInput =
+    abstract member IsUp : bool
+    abstract member IsDown : bool
+    abstract member IsLeft : bool
+    abstract member IsRight : bool
 
 [<AutoOpen>]
 module Algorithm =
@@ -82,7 +69,7 @@ type Ghost = {
     IsReturning : bool
     }
 
-type Game(scene:IScene, keys:Keys) =
+type Game(scene:IScene, input:IInput) =
     let toBitmap color lines = scene.CreateBitmap(color,lines)
     let toImage (bitmap:IBitmap) = bitmap.CreateContent() 
     let load s = sprintf "Images/%s.png" s |> scene.LoadBitmap |> toImage
@@ -225,7 +212,7 @@ _______7./7 |      ! /7./_______
         let numbers =
             lines |> Array.map (fun line ->
                 line.ToCharArray() 
-                |> Array.map (fun c -> if isWall c then Int32.MaxValue else -1)
+                |> Array.map (fun c -> if isWall c then System.Int32.MaxValue else -1)
             )
         let canFill (x,y) =
             y>=0 && y < numbers.Length &&
@@ -356,14 +343,12 @@ _______7./7 |      ! /7./_______
     let updateGhosts () = ghosts <- newGhosts ()
 
     let updatePacman () =
-        let up, down, left, right = Key.Q, Key.A, Key.Z, Key.X
-        let pressed key = keys.IsKeyDown key
         let directions = 
             [
-            if pressed up && canGoUp (!x,!y) then yield (0,-1), pu
-            if pressed down && canGoDown (!x,!y) then yield (0,1), pd
-            if pressed left && canGoLeft (!x,!y) then yield (-1,0), pl
-            if pressed right && canGoRight (!x,!y) then yield (1,0), pr
+            if input.IsUp && canGoUp (!x,!y) then yield (0,-1), pu
+            if input.IsDown && canGoDown (!x,!y) then yield (0,1), pd
+            if input.IsLeft && canGoLeft (!x,!y) then yield (-1,0), pl
+            if input.IsRight && canGoRight (!x,!y) then yield (1,0), pr
             ] 
             |> List.sortBy (fun (_,p') -> p' = !pacman)
         let move ((dx,dy),d) =
@@ -426,6 +411,25 @@ _______7./7 |      ! /7./_______
         updatePower ()
 
     member this.Update () = update ()
+
+open System
+open System.Windows
+open System.Windows.Controls
+open System.Windows.Input
+open System.Windows.Media
+open System.Windows.Media.Imaging
+
+type Keys (control:Control) =
+    #if SILVERLIGHT
+    #else // WPF specific workaround
+    do  control.Focusable <- true
+    do  control.Focus() |> ignore
+    #endif
+    let mutable keysDown = Set.empty  
+    do  control.KeyDown.Add (fun e -> keysDown <- keysDown.Add e.Key)
+    do  control.KeyUp.Add (fun e -> keysDown <- keysDown.Remove e.Key)
+    do  control.LostFocus.Add (fun _ -> keysDown <- Set.empty)
+    member keys.IsKeyDown key = keysDown.Contains key
 
 [<AutoOpen>]
 module Text =
@@ -562,7 +566,17 @@ type GameControl () as control =
     do  s1.Text <- "00"
     let s1 = Content(s1) :> IContent
     do  s1.Move(3.0*8.0,8.0); scene.Contents.Add(s1)
-    let game = Game(scene, keys)
+    let input = 
+        let up, down, left, right = Key.Q, Key.A, Key.Z, Key.X
+        let pressed key = keys.IsKeyDown key
+        { new IInput with
+            member this.IsUp = pressed up
+            member this.IsDown = pressed down
+            member this.IsLeft = pressed left
+            member this.IsRight = pressed right
+        }
+    let game = Game(scene, input)
+    
     do run (1.0/50.0) game.Update |> ignore
 
 (*[omit:Run script on TryFSharp.org]*)
