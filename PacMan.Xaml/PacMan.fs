@@ -2,6 +2,7 @@
 
 type Paint(aarrggbb:int) =
     static member White = Paint(0xFFFFFFFF)
+    static member Black = Paint(0x00000000)
     static member Blue = Paint(0xFF0000FF)
     static member Yellow = Paint(0xFFFFFF00)
     static member Transparent = Paint(0x00FFFFFF)
@@ -9,7 +10,7 @@ type Paint(aarrggbb:int) =
 
 type IScene =
     abstract member AddLayer : unit -> ILayer
-    abstract member CreateBitmap : Paint * int list -> IBitmap
+    abstract member CreateBitmap : Paint * int seq -> IBitmap
     abstract member LoadBitmap : string -> IBitmap
     abstract member Contents : IContents
 and  IContents = 

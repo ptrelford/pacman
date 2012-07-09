@@ -45,23 +45,23 @@ module Rendering =
     
 [<AutoOpen>]
 module Imaging =
-    let toBitmap (paint:Paint) (xs:int list) =
+    let toBitmap (paint:Paint) (xs:int seq) =
         let width = 8
         let white = paint.Color
         let black = 0x00000000
         let toColor = function true -> white | false -> black
 #if SILVERLIGHT        
-        let bitmap = WriteableBitmap(width, xs.Length)
+        let bitmap = WriteableBitmap(width, Seq.length xs)
         let pixels = bitmap.Pixels
-        xs |> List.iteri (fun y xs ->
+        xs |> Seq.iteri (fun y xs ->
             for x = 0 to width-1 do
                 let bit = 1 <<< (width - 1 - x) 
                 pixels.[x+y*width] <- xs &&& bit = bit |> toColor
         )
         bitmap
 #else
-        let bitmap = WriteableBitmap(width, xs.Length, 300.0, 300.0, PixelFormats.Bgra32, null)
-        xs |> List.iteri (fun y xs ->
+        let bitmap = WriteableBitmap(width, Seq.length xs, 300.0, 300.0, PixelFormats.Bgra32, null)
+        xs |> Seq.iteri (fun y xs ->
             let line = 
                 Array.init width (fun x ->
                     let bit = 1 <<< (width - 1 - x) 
@@ -141,8 +141,8 @@ type GameControl () as control =
     let keys = Keys(control)
     let canvas = Canvas(Background = SolidColorBrush Colors.Black)
     do  canvas.Width <- 28.0 * 8.0; canvas.Height <- (32.0+4.0) * 8.0
-    let g = RectangleGeometry(Rect=Rect(Width=canvas.Width,Height=canvas.Height))
-    do  canvas.Clip <- g
+    let clip = RectangleGeometry(Rect=Rect(Width=canvas.Width,Height=canvas.Height))
+    do  canvas.Clip <- clip
     do  control.Width <- canvas.Width; control.Height <- canvas.Height
     do  control.Content <- canvas
     let scene = Scene(canvas) :> IScene

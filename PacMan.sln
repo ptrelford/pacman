@@ -11,6 +11,8 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "PacMan.WPF", "PacMan.Xaml\P
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "PacMan.SilverlightLibrary", "PacMan.Xaml\PacMan.SilverlightLibrary.fsproj", "{58A20AB7-B78E-42B1-A9FB-05E370F4D429}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PacMan.Metro", "PacMan.Xaml\PacMan.Metro.csproj", "{1A449C82-C780-4412-BE6F-ACA5D265EF01}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -71,6 +73,16 @@ Global
 		{58A20AB7-B78E-42B1-A9FB-05E370F4D429}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{58A20AB7-B78E-42B1-A9FB-05E370F4D429}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{58A20AB7-B78E-42B1-A9FB-05E370F4D429}.Release|x86.ActiveCfg = Release|Any CPU
+		{1A449C82-C780-4412-BE6F-ACA5D265EF01}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1A449C82-C780-4412-BE6F-ACA5D265EF01}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1A449C82-C780-4412-BE6F-ACA5D265EF01}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{1A449C82-C780-4412-BE6F-ACA5D265EF01}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{1A449C82-C780-4412-BE6F-ACA5D265EF01}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{1A449C82-C780-4412-BE6F-ACA5D265EF01}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1A449C82-C780-4412-BE6F-ACA5D265EF01}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1A449C82-C780-4412-BE6F-ACA5D265EF01}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{1A449C82-C780-4412-BE6F-ACA5D265EF01}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{1A449C82-C780-4412-BE6F-ACA5D265EF01}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
