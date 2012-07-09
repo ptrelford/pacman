@@ -223,8 +223,12 @@ _______7./7 |      ! /7./_______
         else lines.[y].[x]
 
     let isWallAt (x,y) = tileAt x y |> isWall
-    let p, pu, pd, pl, pr = load "p", load "pu", load "pd", load "pl", load "pr"
-    let lives = [for _ in 1..2 -> load "pl"]
+    let p = load "p"
+    let pu = load "pu1",load "pu2"
+    let pd = load "pd1",load "pd2"
+    let pl = load "pl1",load "pl2"
+    let pr = load "pr1",load "pr2"
+    let lives = [for _ in 1..2 -> load "pl1"]
     do  lives |> List.iteri (fun i life -> add life; set life (16+16*i,32*8))
 
     let ghost_starts = 
@@ -253,6 +257,7 @@ _______7./7 |      ! /7./_______
 
     let x = ref (16 * 8 - 7)
     let y = ref (24 * 8 - 3)
+    let v = ref (0,0)
 
     let noWall (x,y) (ex,ey) =
         let bx, by = int ((x+6+ex)/8), int ((y+6+ey)/8)
@@ -346,11 +351,12 @@ _______7./7 |      ! /7./_______
             if input.IsLeft && canGoLeft (!x,!y) then yield (-1,0), pl
             if input.IsRight && canGoRight (!x,!y) then yield (1,0), pr
             ] 
-            |> List.sortBy (fun (_,p') -> p' = !pacman)
-        let move ((dx,dy),d) =
+            |> List.sortBy (fun (v',_) -> v' = !v)
+        let move ((dx,dy),(d1,d2)) =
             let x', y' = go (!x,!y) (dx,dy)
-            x := x'; y := y'
+            x := x'; y := y'; v := (dx,dy)
             remove !pacman
+            let d = if (!x/6 + !y/6) % 2 = 0 then d1 else d2
             add d
             pacman := d
         if directions.Length > 0 then
