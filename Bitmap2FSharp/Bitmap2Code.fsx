@@ -24,7 +24,9 @@ let convert name (path:string) =
                 let g = int bytes.[i + 1] <<< 8
                 let r = int bytes.[i + 2] <<< 16
                 let a = int bytes.[i + 3] <<< 24
-                a + r + g + b|]
+                if a = 0 then 0
+                else a ||| r ||| g ||| b 
+            |]
         |]
     let colors = grid |> Array.collect id |>  Seq.distinct |> Seq.toArray
     let code x =

@@ -183,6 +183,7 @@
     </Content>
     <Content Include="Properties\AppManifest.xml" />
     <Content Include="Properties\OutOfBrowserSettings.xml" />
+    <Compile Include="Images.fs" />
     <Compile Include="PacMan.fs" />
     <Compile Include="App.fs" />
   </ItemGroup>

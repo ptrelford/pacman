@@ -69,7 +69,13 @@ type Ghost = {
 type Game(scene:IScene, input:IInput) =
     let toBitmap color lines = scene.CreateBitmap(color,lines)
     let toImage (bitmap:IBitmap) = bitmap.CreateContent() 
+#if SILVERLIGHT
+    let load s = 
+        let w,h,lines = Images.nameToValue |> Seq.find (fst >> (=) s) |> snd
+        scene.CreateBitmap(w,h,lines).CreateContent()
+#else
     let load s = sprintf "Images/%s.png" s |> scene.LoadBitmap |> toImage
+#endif
     let add item = scene.Contents.Add(item)
     let remove item = scene.Contents.Remove(item)
     let set (element:IContent) (x,y) = element.Move(x - 16 |> float, y + 16 |> float)

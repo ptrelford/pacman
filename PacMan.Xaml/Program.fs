@@ -33,6 +33,7 @@ let layer = { new ILayer with
 let scene = { new IScene with
         member scene.AddLayer() = layer
         member scene.CreateBitmap(paint,lines) = bitmap
+        member scene.CreateBitmap(width,height,lines) = bitmap
         member scene.LoadBitmap(path) = bitmap
         member scene.Contents = contents
     }
