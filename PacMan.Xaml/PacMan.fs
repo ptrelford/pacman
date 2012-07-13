@@ -11,6 +11,7 @@ type Paint(aarrggbb:int) =
 type IScene =
     abstract member AddLayer : unit -> ILayer
     abstract member CreateBitmap : Paint * int seq -> IBitmap
+    abstract member CreateBitmap : int * int * int[][] -> IBitmap
     abstract member LoadBitmap : string -> IBitmap
     abstract member Contents : IContents
 and  IContents = 

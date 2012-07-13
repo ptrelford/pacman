@@ -24,6 +24,7 @@ module Text =
     let whiteBrush = SolidColorBrush Colors.White
     let createTextBlock () =
         TextBlock(
+            FontFamily=FontFamily("Courier New"),
             Foreground=whiteBrush, 
             FontSize=8.0,
             FontWeight=FontWeights.ExtraBold
@@ -45,32 +46,35 @@ module Rendering =
     
 [<AutoOpen>]
 module Imaging =
-    let toBitmap (paint:Paint) (xs:int seq) =
-        let width = 8
-        let white = paint.Color
-        let black = 0x00000000
-        let toColor = function true -> white | false -> black
-#if SILVERLIGHT        
-        let bitmap = WriteableBitmap(width, Seq.length xs)
+    let createBitmap (width:int,height:int) (lines:int[][]) =
+#if SILVERLIGHT
+        let bitmap = WriteableBitmap(width, height)
         let pixels = bitmap.Pixels
-        xs |> Seq.iteri (fun y xs ->
-            for x = 0 to width-1 do
-                let bit = 1 <<< (width - 1 - x) 
-                pixels.[x+y*width] <- xs &&& bit = bit |> toColor
+        lines |> Seq.iteri (fun y line ->
+            for x = 0 to width-1 do 
+                pixels.[x+y*width] <- line.[x]
         )
         bitmap
 #else
-        let bitmap = WriteableBitmap(width, Seq.length xs, 300.0, 300.0, PixelFormats.Bgra32, null)
-        xs |> Seq.iteri (fun y xs ->
-            let line = 
-                Array.init width (fun x ->
-                    let bit = 1 <<< (width - 1 - x) 
-                    xs &&& bit = bit |> toColor
-                )
+        let bitmap = WriteableBitmap(width, height, 300.0, 300.0, PixelFormats.Bgra32, null)
+        lines |> Seq.iteri (fun y line ->
             bitmap.WritePixels(Int32Rect(0,0,width,1), line, width*4, 0 , y)
         )  
         bitmap
 #endif
+    let toBitmap (paint:Paint) (lines:int seq) =
+        let lines = lines |> Seq.toArray
+        let width, height = 8, lines.Length
+        let white = paint.Color
+        let black = 0x00000000
+        let toColor = function true -> white | false -> black
+        lines |> Array.mapi (fun y line ->
+            Array.init width (fun x ->
+                let bit = 1 <<< (width - 1 - x) 
+                line &&& bit = bit |> toColor
+            )
+        )
+        |> createBitmap (width,height)
     let toImage (bitmap:#BitmapSource) =
         let w, h = float bitmap.PixelWidth, float bitmap.PixelHeight  
         Image(Source=bitmap,Stretch=Stretch.Fill,Width=w,Height=h) 
@@ -98,6 +102,9 @@ type Scene (canvas:Canvas) =
             Bitmap(bitmap) :> IBitmap
         member scene.CreateBitmap(paint,lines) = 
             let bitmap = toBitmap paint lines
+            Bitmap(bitmap) :> IBitmap
+        member scene.CreateBitmap(width,height,lines) =
+            let bitmap = createBitmap (width,height) lines
             Bitmap(bitmap) :> IBitmap
         member scene.Contents = contents :> IContents
 and  Bitmap (source:BitmapSource) =
