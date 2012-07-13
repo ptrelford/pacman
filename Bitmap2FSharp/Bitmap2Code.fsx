@@ -47,8 +47,18 @@ let convert name (path:string) =
 
 do
     let folder = @"C:\Users\Moon\Documents\Visual Studio 2010\Projects\pacman\PacMan.Xaml\Images"
-    Directory.GetFiles(folder,"*.png")
-    |> Array.iter (fun path ->
-        let name = Path.GetFileNameWithoutExtension(path)
+    let files = Directory.GetFiles(folder,"*.png")
+    let toLabel (name:string) =
+        if Char.IsDigit name.[0] 
+        then sprintf "``%s``" name
+        else name
+    for path in files do
+        let name = Path.GetFileNameWithoutExtension(path) |> toLabel
         convert name path
-    )
+    printfn "let nameToValue ="
+    printfn "\t["
+    for path in files do
+        let name = Path.GetFileNameWithoutExtension(path)
+        let label = name |> toLabel
+        printfn "\t\"%s\", %s" name label
+    printf "\t]"
