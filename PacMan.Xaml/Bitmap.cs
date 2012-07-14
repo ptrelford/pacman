@@ -17,6 +17,19 @@ namespace PacMan.Metro
             _source = source;
         }
 
+        public static IBitmap Create(int width, int height, int[][] lines)
+        {
+            var bitmap = new WriteableBitmap(width, height);
+            var pixels = bitmap.Pixels;
+            int p = 0;
+            foreach (var line in lines)
+            {
+                foreach (var pixel in line)
+                    pixels[p++] = pixel;
+            }
+            return new Bitmap(bitmap);
+        }
+
         public static IBitmap Create(Paint paint, IEnumerable<int> lines)
         {
             int width = 8, height = lines.Count();

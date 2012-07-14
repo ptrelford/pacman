@@ -34,7 +34,7 @@ namespace PacMan.Metro
 
         public IBitmap CreateBitmap(int width, int height, int[][] lines)
         {
-            throw new NotImplementedException();
+            return Bitmap.Create(width, height, lines);
         }
 
         public IBitmap LoadBitmap(string path)
