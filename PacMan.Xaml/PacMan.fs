@@ -315,14 +315,20 @@ _______7./7 |      ! /7./_______
             let directions =
                 if ghost.IsReturning then
                     directions
-                    |> Seq.sortBy snd
+                    |> Seq.toArray
+                    |> Array.sortBy snd
                     |> Seq.map fst
-                    |> Seq.sortBy isBackwards
+                    |> Seq.toArray                    
+                    |> Array.sortBy isBackwards
+                    |> Seq.toArray
                 else
                     directions
                     |> Seq.map fst
+                    |> Seq.toArray
                     |> Seq.unsort
-                    |> Seq.sortBy isBackwards
+                    |> Seq.toArray
+                    |> Array.sortBy isBackwards
+                    |> Seq.toArray
             let dx, dy = 
                 let newDirection = 
                     directions |> Seq.head

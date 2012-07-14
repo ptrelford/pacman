@@ -1,8 +1,13 @@
 ﻿using System;
+#if NETFX_CORE
+using Windows.UI.Xaml;
+using Windows.UI.Xaml.Controls;
+#else
 using System.Windows;
 using System.Windows.Controls;
+#endif
 
-namespace PacMan.Metro
+namespace PacMan.App
 {
     public class Content : IContent
     {

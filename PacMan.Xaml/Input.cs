@@ -1,6 +1,10 @@
-﻿using System.Windows.Input;
+﻿#if NETFX_CORE
+using Windows.System;
+#else
+using System.Windows.Input;
+#endif
 
-namespace PacMan.Metro
+namespace PacMan.App
 {
     public class Input : IInput
     {

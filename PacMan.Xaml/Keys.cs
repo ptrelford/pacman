@@ -1,10 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
+#if NETFX_CORE
+using Windows.System;
+using Windows.UI.Xaml;
+using Windows.UI.Xaml.Controls;
+using Windows.UI.Xaml.Input;
+#else
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+#endif
 
-namespace PacMan.Metro
+namespace PacMan.App
 {
     public class Keys : IDisposable
     {

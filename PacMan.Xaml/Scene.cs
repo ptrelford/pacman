@@ -1,8 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+#if NETFX_CORE
+using Windows.UI.Xaml.Controls;
+#else
 using System.Windows.Controls;
+#endif
 
-namespace PacMan.Metro
+namespace PacMan.App
 {
     public class Scene : IScene
     {
