@@ -404,9 +404,7 @@ _______7./7 |      ! /7./_______
              (y < py + 13 && y >= py))
         )
 
-    let update () =
-        updatePacman ()
-        updateGhosts ()
+    let handleTouching () =
         let touching = touchGhosts()
         if touching.Length > 0 then
             if powerCount > 0 
@@ -418,6 +416,11 @@ _______7./7 |      ! /7./_______
                 else ghost
             )
             else flashCount <- 20
+
+    let update () =
+        updatePacman ()
+        updateGhosts ()
+        handleTouching ()
         updateFlash ()
         updatePower ()
 
