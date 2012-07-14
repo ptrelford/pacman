@@ -1,33 +1,41 @@
-﻿using System;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Media;
+﻿using Windows.UI.Xaml.Controls;
+using Windows.UI.Xaml.Media;
+using Windows.UI.Xaml.Navigation;
 
-namespace PacMan.Metro
+// The Blank Page item template is documented at http://go.microsoft.com/fwlink/?LinkId=234238
+
+namespace PacMan.App.Metro
 {
-    public partial class MainPage : UserControl
+    /// <summary>
+    /// An empty page that can be used on its own or navigated to within a Frame.
+    /// </summary>
+    public sealed partial class MainPage : Page
     {
         public MainPage()
         {
-            InitializeComponent();
+            this.InitializeComponent();
 
-            var keys = new Keys(this);
-            var canvas = new Canvas
+            var canvas = Main.CreateCanvas();
+            canvas.RenderTransform = new ScaleTransform
             {
-                Background = new SolidColorBrush(Colors.Black),
-                Width = 28 * 8,
-                Height = (32 + 4) * 8
+                CenterX = canvas.Width / 2.0,
+                CenterY = canvas.Height / 2.0,
+                ScaleX = 3.0,
+                ScaleY = 3.0
             };
-            var clip = new RectangleGeometry 
-            {
-                Rect = new Rect { Width=canvas.Width, Height = canvas.Height }
-            };
-            canvas.Clip = clip;
             this.Width = canvas.Width;
             this.Height = canvas.Height;
             this.Content = canvas;
-            var game = new Game(new Scene(canvas), new Input(keys));
-            Rendering.Run(TimeSpan.FromSeconds(1.0 / 50.0), game.Update);
+            Main.StartGame(this, canvas);
+        }
+
+        /// <summary>
+        /// Invoked when this page is about to be displayed in a Frame.
+        /// </summary>
+        /// <param name="e">Event data that describes how this page was reached.  The Parameter
+        /// property is typically used to configure the page.</param>
+        protected override void OnNavigatedTo(NavigationEventArgs e)
+        {
         }
     }
 }

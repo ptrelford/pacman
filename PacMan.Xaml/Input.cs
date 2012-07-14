@@ -1,5 +1,6 @@
 ﻿#if NETFX_CORE
 using Windows.System;
+using Key = Windows.System.VirtualKey;
 #else
 using System.Windows.Input;
 #endif

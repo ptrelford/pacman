@@ -29,7 +29,6 @@ namespace PacMan.App
             var bitmap = new WriteableBitmap(width, height);
 #if NETFX_CORE
             var pixels = bitmap.PixelBuffer.AsStream();
-            int p = 0;
             foreach (var line in lines)
             {
                 foreach (var pixel in line)
@@ -57,7 +56,7 @@ namespace PacMan.App
             int width = 8, height = lines.Count();
             var bitmap = new WriteableBitmap(width, height);
 #if NETFX_CORE
-            var pixels = bitmap.PixelBuffer.AsStream();                        
+            var pixels = bitmap.PixelBuffer.AsStream();
             foreach (int line in lines)
             {
                 for (int x = 0; x < width; x++)
@@ -70,7 +69,7 @@ namespace PacMan.App
                     pixels.WriteByte((byte)(pixel >> 00));
                     pixels.WriteByte((byte)(pixel >> 08));
                     pixels.WriteByte((byte)(pixel >> 16));
-                    pixels.WriteByte((byte)(pixel >> 24));                    
+                    pixels.WriteByte((byte)(pixel >> 24));
                 }
             }
 #else
@@ -88,11 +87,11 @@ namespace PacMan.App
                     pixels[x+y*width] = pixel;
                 }
                 ++y;
-            }
-
+            }            
+#endif
             return new Bitmap(bitmap);
         }
-#endif
+
         public static IBitmap Load(string path)
         {
 #if NETFX_CORE

@@ -3,6 +3,7 @@
 using Windows.UI;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Media;
+using Windows.Foundation;
 #else
 using System.Windows;
 using System.Windows.Controls;
