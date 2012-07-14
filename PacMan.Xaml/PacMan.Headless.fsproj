@@ -39,6 +39,7 @@
     <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Images.fs" />
     <Compile Include="PacMan.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>

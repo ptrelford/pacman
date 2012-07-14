@@ -16,6 +16,9 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Pit", "Pit", "{E320E866-D887-414E-A3EE-838A182A474F}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Xaml", "Xaml", "{8026F8AE-FDC7-4923-9BB8-AC9CA4A104AA}"
+	ProjectSection(SolutionItems) = preProject
+		Bitmap2FSharp\Bitmap2Code.fsx = Bitmap2FSharp\Bitmap2Code.fsx
+	EndProjectSection
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "PacMan.Headless", "PacMan.Xaml\PacMan.Headless.fsproj", "{AE25660D-F2FC-402B-AF9D-73C249ED216B}"
 EndProject
