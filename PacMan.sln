@@ -9,7 +9,7 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "PacMan.Silverlight", "PacMa
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "PacMan.WPF", "PacMan.Xaml\PacMan.WPF.fsproj", "{CD3CDA72-2FEF-4E10-A35E-AB5B1C3EF274}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "PacMan.SilverlightLibrary", "PacMan.Xaml\PacMan.SilverlightLibrary.fsproj", "{58A20AB7-B78E-42B1-A9FB-05E370F4D429}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "PacMan.Silverlight.Library", "PacMan.Xaml\PacMan.Silverlight.Library.fsproj", "{58A20AB7-B78E-42B1-A9FB-05E370F4D429}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PacMan.App.Silverlight", "PacMan.Xaml\PacMan.App.Silverlight.csproj", "{1A449C82-C780-4412-BE6F-ACA5D265EF01}"
 EndProject
@@ -21,6 +21,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Xaml", "Xaml", "{8026F8AE-F
 	EndProjectSection
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "PacMan.Headless", "PacMan.Xaml\PacMan.Headless.fsproj", "{AE25660D-F2FC-402B-AF9D-73C249ED216B}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "PacMan.Silverlight.TryFSharp", "PacMan.Xaml\PacMan.Silverlight.TryFSharp.fsproj", "{6B23CBB2-55A0-4532-89FD-C7DAAE9017F8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -102,6 +104,16 @@ Global
 		{AE25660D-F2FC-402B-AF9D-73C249ED216B}.Release|Mixed Platforms.Build.0 = Release|x86
 		{AE25660D-F2FC-402B-AF9D-73C249ED216B}.Release|x86.ActiveCfg = Release|x86
 		{AE25660D-F2FC-402B-AF9D-73C249ED216B}.Release|x86.Build.0 = Release|x86
+		{6B23CBB2-55A0-4532-89FD-C7DAAE9017F8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6B23CBB2-55A0-4532-89FD-C7DAAE9017F8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6B23CBB2-55A0-4532-89FD-C7DAAE9017F8}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{6B23CBB2-55A0-4532-89FD-C7DAAE9017F8}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{6B23CBB2-55A0-4532-89FD-C7DAAE9017F8}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{6B23CBB2-55A0-4532-89FD-C7DAAE9017F8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6B23CBB2-55A0-4532-89FD-C7DAAE9017F8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6B23CBB2-55A0-4532-89FD-C7DAAE9017F8}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{6B23CBB2-55A0-4532-89FD-C7DAAE9017F8}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{6B23CBB2-55A0-4532-89FD-C7DAAE9017F8}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -114,5 +126,6 @@ Global
 		{1A449C82-C780-4412-BE6F-ACA5D265EF01} = {8026F8AE-FDC7-4923-9BB8-AC9CA4A104AA}
 		{83C7EF7A-EC78-4A67-9A66-F282E43FE2B6} = {8026F8AE-FDC7-4923-9BB8-AC9CA4A104AA}
 		{AE25660D-F2FC-402B-AF9D-73C249ED216B} = {8026F8AE-FDC7-4923-9BB8-AC9CA4A104AA}
+		{6B23CBB2-55A0-4532-89FD-C7DAAE9017F8} = {8026F8AE-FDC7-4923-9BB8-AC9CA4A104AA}
 	EndGlobalSection
 EndGlobal

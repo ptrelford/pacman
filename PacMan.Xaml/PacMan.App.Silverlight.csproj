@@ -204,9 +204,9 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="PacMan.SilverlightLibrary.fsproj">
+    <ProjectReference Include="PacMan.Silverlight.Library.fsproj">
       <Project>{58A20AB7-B78E-42B1-A9FB-05E370F4D429}</Project>
-      <Name>PacMan.SilverlightLibrary</Name>
+      <Name>PacMan.Silverlight.Library</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Silverlight\$(SilverlightVersion)\Microsoft.Silverlight.CSharp.targets" />

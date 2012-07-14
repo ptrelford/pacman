@@ -21,8 +21,8 @@ type Keys (control:Control) =
 
 [<AutoOpen>]
 module Text =
-    let whiteBrush = SolidColorBrush Colors.White
     let createTextBlock () =
+        let whiteBrush = SolidColorBrush Colors.White
         TextBlock(
             FontFamily=FontFamily("Courier New"),
             Foreground=whiteBrush, 
@@ -141,7 +141,7 @@ and  Content (element:UIElement) =
         member content.Control = element :> obj
  
 type GameControl () as control =
-    inherit UserControl(Background=SolidColorBrush Colors.Black)
+    inherit UserControl(Background=SolidColorBrush Colors.Black, IsTabStop=true)
 #if SILVERLIGHT
     do control.RenderTransform <- ScaleTransform(ScaleX=1.5,ScaleY=1.5)
 #endif
@@ -162,7 +162,7 @@ type GameControl () as control =
     let s1 = Content(s1) :> IContent
     do  s1.Move(3.0*8.0,8.0); scene.Contents.Add(s1)
     let input = 
-        let up, down, left, right = Key.Q, Key.A, Key.Z, Key.X
+        let up, down, left, right = Key.Up, Key.Down, Key.Left, Key.Right
         let pressed key = keys.IsKeyDown key
         { new IInput with
             member this.IsUp = pressed up
