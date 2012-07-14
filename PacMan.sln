@@ -11,7 +11,7 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "PacMan.WPF", "PacMan.Xaml\P
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "PacMan.SilverlightLibrary", "PacMan.Xaml\PacMan.SilverlightLibrary.fsproj", "{58A20AB7-B78E-42B1-A9FB-05E370F4D429}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PacMan.Metro", "PacMan.Xaml\PacMan.Metro.csproj", "{1A449C82-C780-4412-BE6F-ACA5D265EF01}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PacMan.App.Silverlight", "PacMan.Xaml\PacMan.App.Silverlight.csproj", "{1A449C82-C780-4412-BE6F-ACA5D265EF01}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Pit", "Pit", "{E320E866-D887-414E-A3EE-838A182A474F}"
 EndProject

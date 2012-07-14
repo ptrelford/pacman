@@ -9,8 +9,8 @@
     <ProjectTypeGuids>{A1591282-1198-4647-A2B1-27E5FF5F6F3B};{fae04ec0-301f-11d3-bf4b-00c04f79efbc}</ProjectTypeGuids>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>PacMan.Metro</RootNamespace>
-    <AssemblyName>PacMan.Metro</AssemblyName>
+    <RootNamespace>PacMan.App</RootNamespace>
+    <AssemblyName>PacMan.App.Silverlight</AssemblyName>
     <TargetFrameworkIdentifier>Silverlight</TargetFrameworkIdentifier>
     <TargetFrameworkVersion>v5.0</TargetFrameworkVersion>
     <SilverlightVersion>$(TargetFrameworkVersion)</SilverlightVersion>
@@ -19,10 +19,10 @@
     </SupportedCultures>
     <XapOutputs>true</XapOutputs>
     <GenerateSilverlightManifest>true</GenerateSilverlightManifest>
-    <XapFilename>PacMan.Metro.xap</XapFilename>
+    <XapFilename>PacMan.App.Silverlightxap.xap</XapFilename>
     <SilverlightManifestTemplate>Properties\AppManifest.xml</SilverlightManifestTemplate>
-    <SilverlightAppEntry>PacMan.Metro.App</SilverlightAppEntry>
-    <TestPageFileName>PacMan.MetroTestPage.html</TestPageFileName>
+    <SilverlightAppEntry>PacMan.App.App</SilverlightAppEntry>
+    <TestPageFileName>PacMan.App.SilverlightTestPage.html</TestPageFileName>
     <CreateTestPage>true</CreateTestPage>
     <ValidateXaml>true</ValidateXaml>
     <EnableOutOfBrowser>true</EnableOutOfBrowser>
@@ -204,9 +204,9 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="PacMan.PortableLibrary.fsproj">
-      <Project>{833e30ee-426b-4687-bca8-9a765ecf3af0}</Project>
-      <Name>PacMan.PortableLibrary</Name>
+    <ProjectReference Include="PacMan.SilverlightLibrary.fsproj">
+      <Project>{58A20AB7-B78E-42B1-A9FB-05E370F4D429}</Project>
+      <Name>PacMan.SilverlightLibrary</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Silverlight\$(SilverlightVersion)\Microsoft.Silverlight.CSharp.targets" />
