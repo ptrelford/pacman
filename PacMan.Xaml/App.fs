@@ -14,23 +14,48 @@ type Keys (control:Control) =
     do  control.Focus() |> ignore
     #endif
     let mutable keysDown = Set.empty  
-    do  control.KeyDown.Add (fun e -> keysDown <- keysDown.Add e.Key)
-    do  control.KeyUp.Add (fun e -> keysDown <- keysDown.Remove e.Key)
+    do  control.KeyDown.Add (fun e -> e.Handled <- true; keysDown <- keysDown.Add e.Key)
+    do  control.KeyUp.Add (fun e -> e.Handled <- true; keysDown <- keysDown.Remove e.Key)
     do  control.LostFocus.Add (fun _ -> keysDown <- Set.empty)
     member keys.IsKeyDown key = keysDown.Contains key
 
 [<AutoOpen>]
 module Rendering = 
-    let run rate update =
+    let run (control:Control) rate update =
+        let focus = ref true
         let rate = TimeSpan.FromSeconds(rate)
         let lastUpdate = ref DateTime.Now
         let residual = ref (TimeSpan.Zero)
-        CompositionTarget.Rendering.Subscribe (fun _ -> 
+        #if SILVERLIGHT
+        let subscriptions =
+            [
+            control.GotFocus.Subscribe(fun _ -> 
+                focus := true
+                lastUpdate := DateTime.Now
+                residual := TimeSpan.Zero
+            )
+            control.LostFocus.Subscribe(fun _ -> 
+                focus := false
+            )
+            ]
+        #else
+        let window = Application.Current.MainWindow
+        let subscriptions =
+            [
+            window.Activated.Subscribe(fun _ -> 
+                focus := true
+                lastUpdate := DateTime.Now
+                residual := TimeSpan.Zero
+            )
+            window.Deactivated.Subscribe(fun _ -> 
+                focus := false
+            )
+            ]
+        #endif
+        CompositionTarget.Rendering.Subscribe (fun _ ->
             let now = DateTime.Now
             residual := !residual + (now - !lastUpdate)
-            if !residual >= TimeSpan.FromMilliseconds(200.0) then
-                residual := TimeSpan.Zero
-            else
+            if !focus then
                 while !residual > rate do
                     update(); residual := !residual - rate
             lastUpdate := now
@@ -173,8 +198,9 @@ type GameControl () as control =
             member this.IsRight = pressed right
         }
     let game = Game(scene, input)
-    
-    do run (1.0/50.0) game.Update |> ignore
+    do  control.Loaded.Subscribe(fun _ ->
+        run control (1.0/50.0) game.Update |> ignore
+        ) |> ignore
 
 #if SILVERLIGHT
 type App() as this = 
