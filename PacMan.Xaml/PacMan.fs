@@ -13,6 +13,7 @@ type IScene =
     abstract member CreateBitmap : Paint * int seq -> IBitmap
     abstract member CreateBitmap : int * int * int[][] -> IBitmap
     abstract member LoadBitmap : string -> IBitmap
+    abstract member CreateText : string -> ITextContent
     abstract member Contents : IContents
 and  IContents = 
     abstract member Add : IContent -> unit
@@ -27,6 +28,9 @@ and IBitmap =
 and ILayer =
     inherit IContent
     abstract member Contents : IContents
+and ITextContent =
+    inherit IContent
+    abstract member SetText: string -> unit
 
 type IInput =
     abstract member IsUp : bool
@@ -54,6 +58,10 @@ module Seq =
         |> Seq.cache
         |> Seq.sortBy fst
         |> Seq.map snd
+    // Workaround for issue in VS11(RC) running in F# Portable library from C# Metro App
+    let sortBy f xs = 
+        System.Linq.Enumerable.OrderBy(xs,System.Func<_,_>(f))
+        |> Seq.readonly
 
 type Ghost = {
     Blue : IContent
@@ -67,6 +75,7 @@ type Ghost = {
     }
 
 type Game(scene:IScene, input:IInput) =
+    let createText text = scene.CreateText(text)
     let toBitmap color lines = scene.CreateBitmap(color,lines)
     let toImage (bitmap:IBitmap) = bitmap.CreateContent()
     let load s =
@@ -74,6 +83,7 @@ type Game(scene:IScene, input:IInput) =
         scene.CreateBitmap(w,h,lines).CreateContent()
     let add item = scene.Contents.Add(item)
     let remove item = scene.Contents.Remove(item)
+    let contains item = scene.Contents.Contains(item)
     let set (element:IContent) (x,y) = element.Move(x - 16 |> float, y + 16 |> float)
     let maze = "
 ##/------------7/------------7##
@@ -227,10 +237,10 @@ _______7./7 |      ! /7./_______
 
     let isWallAt (x,y) = tileAt x y |> isWall
     let p = load "p"
-    let pu = load "pu1",load "pu2"
-    let pd = load "pd1",load "pd2"
-    let pl = load "pl1",load "pl2"
-    let pr = load "pr1",load "pr2"
+    let pu = load "pu1", load "pu2"
+    let pd = load "pd1", load "pd2"
+    let pl = load "pl1", load "pl2"
+    let pr = load "pr1", load "pr2"
     let lives = [for _ in 1..2 -> load "pl1"]
     do  lives |> List.iteri (fun i life -> add life; set life (16+16*i,32*8))
 
@@ -258,6 +268,9 @@ _______7./7 |      ! /7./_______
     do  add !pacman
     let mutable powerCount = 0
 
+    let mutable score = 0
+    let mutable bonus = 0
+    let mutable bonuses = []
     let x = ref (16 * 8 - 7)
     let y = ref (24 * 8 - 3)
     let v = ref (0,0)
@@ -315,26 +328,14 @@ _______7./7 |      ! /7./_______
             let directions =
                 if ghost.IsReturning then
                     directions
-                    |> Seq.toArray
-                    |> Array.sortBy snd
+                    |> Seq.sortBy snd
                     |> Seq.map fst
-                    |> Seq.toArray                    
-                    |> Array.sortBy isBackwards
-                    |> Seq.toArray
                 else
                     directions
                     |> Seq.map fst
-                    |> Seq.toArray
                     |> Seq.unsort
-                    |> Seq.toArray
-                    |> Array.sortBy isBackwards
-                    |> Seq.toArray
-            let dx, dy = 
-                let newDirection = 
-                    directions |> Seq.head
-                if not <| isBackwards newDirection 
-                then newDirection
-                else dx,dy
+                    |> Seq.sortBy isBackwards
+            let dx, dy = directions |> Seq.head
             let x,y = go (x,y) (dx,dy)
             let returning =
                 if ghost.IsReturning && 0 = (fillValue (x,y) (0,0))
@@ -372,10 +373,14 @@ _______7./7 |      ! /7./_______
             directions.Head |> move
         let tx, ty = int ((!x+6)/8), int ((!y+6)/8)
         if tileAt tx ty = '.' then
-            remove (tiles.[ty].[tx])
+            if contains (tiles.[ty].[tx]) then
+                score <- score + 10
+                remove (tiles.[ty].[tx])
         if tileAt tx ty = 'o' then
-            if scene.Contents.Contains (tiles.[ty].[tx]) then
+            if contains (tiles.[ty].[tx]) then
+                score <- score + 50
                 powerCount <- 500
+                bonus <- 0
             remove (tiles.[ty].[tx])
         set !pacman (!x,!y)
 
@@ -409,13 +414,27 @@ _______7./7 |      ! /7./_______
         if touching.Length > 0 then
             if powerCount > 0 
             then ghosts <- ghosts |> List.mapi (fun i ghost ->
-                if touching |> List.exists ((=) ghost)
-                then  
-                    let ghost' = ghost_starts.[i]
+                if not ghost.IsReturning && 
+                   touching |> List.exists ((=) ghost)
+                then
+                    score <- score + (pown 2 bonus) * 200 
+                    let b = load ([|"200";"400";"800";"1600"|]).[bonus]
+                    set b (ghost.X, ghost.Y)
+                    add b
+                    bonuses <- (100,b) :: bonuses
+                    bonus <- bonus + 1
                     { ghost with IsReturning = true; }
                 else ghost
             )
             else flashCount <- 20
+
+    let updateBonuses () =
+        let removals,remainders =
+            bonuses 
+            |> List.map (fun (count,x) -> count-1,x)
+            |> List.partition (fst >> (=) 0)
+        bonuses <- remainders
+        removals |> List.iter (fun (_,x) -> remove x)
 
     let update () =
         updatePacman ()
@@ -423,5 +442,13 @@ _______7./7 |      ! /7./_______
         handleTouching ()
         updateFlash ()
         updatePower ()
+        updateBonuses ()
 
-    member this.Update () = update ()
+    let p1 = createText("1UP")
+    do  p1.Move(2.0*8.0,0.0); scene.Contents.Add(p1)
+    let s1 = createText("00")
+    do  s1.Move(0.0,8.0); scene.Contents.Add(s1)
+
+    member this.Update () = 
+        s1.SetText(sprintf "%8d" score)
+        update ()

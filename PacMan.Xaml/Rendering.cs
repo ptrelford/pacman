@@ -12,15 +12,22 @@ namespace PacMan.App
         public static void Run(TimeSpan rate, Action action)
         {
             var lastUpdate = DateTime.Now;
-            var residual = new TimeSpan();
+            var residual = TimeSpan.Zero;
             CompositionTarget.Rendering += (s, e) =>
             {
                 var now = DateTime.Now;
                 residual = residual + (now - lastUpdate);
-                while (residual > rate)
+                if (residual >= TimeSpan.FromMilliseconds(200))
                 {
-                    action();
-                    residual -= rate;
+                    residual = TimeSpan.Zero;
+                }
+                else
+                {
+                    while (residual > rate)
+                    {
+                        action();
+                        residual -= rate;
+                    }
                 }
                 lastUpdate = now;
             };

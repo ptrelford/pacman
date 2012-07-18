@@ -20,27 +20,19 @@ type Keys (control:Control) =
     member keys.IsKeyDown key = keysDown.Contains key
 
 [<AutoOpen>]
-module Text =
-    let createTextBlock () =
-        let whiteBrush = SolidColorBrush Colors.White
-        TextBlock(
-            FontFamily=FontFamily("Courier New"),
-            Foreground=whiteBrush, 
-            FontSize=8.0,
-            FontWeight=FontWeights.ExtraBold
-            )
-
-[<AutoOpen>]
 module Rendering = 
     let run rate update =
         let rate = TimeSpan.FromSeconds(rate)
         let lastUpdate = ref DateTime.Now
-        let residual = ref (TimeSpan())
+        let residual = ref (TimeSpan.Zero)
         CompositionTarget.Rendering.Subscribe (fun _ -> 
             let now = DateTime.Now
             residual := !residual + (now - !lastUpdate)
-            while !residual > rate do
-                update(); residual := !residual - rate
+            if !residual >= TimeSpan.FromMilliseconds(200.0) then
+                residual := TimeSpan.Zero
+            else
+                while !residual > rate do
+                    update(); residual := !residual - rate
             lastUpdate := now
         )
     
@@ -106,6 +98,17 @@ type Scene (canvas:Canvas) =
         member scene.CreateBitmap(width,height,lines) =
             let bitmap = createBitmap (width,height) lines
             Bitmap(bitmap) :> IBitmap
+        member scene.CreateText(text:string) =
+            let whiteBrush = SolidColorBrush Colors.White
+            let block = 
+                TextBlock(
+                    FontFamily=FontFamily("Courier New"),
+                    Foreground=whiteBrush, 
+                    FontSize=8.0,
+                    FontWeight=FontWeights.ExtraBold,
+                    Text=text
+                )
+            TextContent(block) :> ITextContent
         member scene.Contents = contents :> IContents
 and  Bitmap (source:BitmapSource) =
     interface IBitmap with
@@ -139,6 +142,13 @@ and  Content (element:UIElement) =
         member content.SetOpacity (value) = 
             element.Opacity <- value
         member content.Control = element :> obj
+and  TextContent (block:TextBlock) =
+    let content = Content(block) :> IContent
+    interface ITextContent with
+        member this.Move(x,y) = content.Move(x,y)
+        member this.SetOpacity(value) = content.SetOpacity(value)
+        member this.Control = block :> obj
+        member this.SetText value = block.Text <- value
  
 type GameControl () as control =
     inherit UserControl(Background=SolidColorBrush Colors.Black, IsTabStop=true)
@@ -153,14 +163,6 @@ type GameControl () as control =
     do  control.Width <- canvas.Width; control.Height <- canvas.Height
     do  control.Content <- canvas
     let scene = Scene(canvas) :> IScene
-    let p1 = createTextBlock()
-    do  p1.Text <- "1UP"
-    let p1 = Content(p1) :> IContent
-    do  p1.Move(2.0*8.0,0.0); scene.Contents.Add(p1)
-    let s1 = createTextBlock()
-    do  s1.Text <- "00"
-    let s1 = Content(s1) :> IContent
-    do  s1.Move(3.0*8.0,8.0); scene.Contents.Add(s1)
     let input = 
         let up, down, left, right = Key.Up, Key.Down, Key.Left, Key.Right
         let pressed key = keys.IsKeyDown key

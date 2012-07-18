@@ -20,7 +20,7 @@ namespace PacMan.App
         private readonly HashSet<Key> _keysDown = new HashSet<Key>();
         private readonly Action _disposeAction;
 
-        public Keys(Control control)
+        internal Keys(Control control)
         {
             control.KeyDown += control_KeyDown;
             control.KeyUp += control_KeyUp;

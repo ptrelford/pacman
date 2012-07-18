@@ -19,12 +19,12 @@ namespace PacMan.App
     {
         private readonly BitmapSource _source;
 
-        public Bitmap(BitmapSource source)
+        private Bitmap(BitmapSource source)
         {
             _source = source;
         }
 
-        public static IBitmap Create(int width, int height, int[][] lines)
+        internal static IBitmap Create(int width, int height, int[][] lines)
         {
             var bitmap = new WriteableBitmap(width, height);
 #if NETFX_CORE
@@ -51,7 +51,7 @@ namespace PacMan.App
             return new Bitmap(bitmap);
         }
 
-        public static IBitmap Create(Paint paint, IEnumerable<int> lines)
+        internal static IBitmap Create(Paint paint, IEnumerable<int> lines)
         {
             int width = 8, height = lines.Count();
             var bitmap = new WriteableBitmap(width, height);
@@ -92,7 +92,7 @@ namespace PacMan.App
             return new Bitmap(bitmap);
         }
 
-        public static IBitmap Load(string path)
+        internal static IBitmap Load(string path)
         {
 #if NETFX_CORE
             throw new NotImplementedException();

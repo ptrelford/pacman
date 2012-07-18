@@ -45,5 +45,10 @@ namespace PacMan.App
         {
             return Bitmap.Load(path);
         }
+
+        public ITextContent CreateText(string text)
+        {
+            return TextContent.Create(text);
+        }
     }
 }

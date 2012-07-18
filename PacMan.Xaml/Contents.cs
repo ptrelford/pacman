@@ -12,7 +12,7 @@ namespace PacMan.App
     {
         private readonly UIElementCollection _children;
         
-        public Contents(UIElementCollection children)
+        internal Contents(UIElementCollection children)
         {
             _children = children;
         }

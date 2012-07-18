@@ -999,9 +999,9 @@ _______7./7 |      ! /7./_______
                     |> Seq.toArray
                     |> Array.sortBy snd
                     |> Seq.map fst
-                    |> Seq.toArray                    
-                    |> Array.sortBy isBackwards
                     |> Seq.toArray
+                    //|> Array.sortBy isBackwards
+                    //|> Seq.toArray
                 else
                     directions
                     |> Seq.map fst
