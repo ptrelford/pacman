@@ -35,6 +35,7 @@ let scene = { new IScene with
         member scene.CreateBitmap(paint,lines) = bitmap
         member scene.CreateBitmap(width,height,lines) = bitmap
         member scene.LoadBitmap(path) = bitmap
+        member scene.CreateText(text) = raise (System.NotImplementedException())
         member scene.Contents = contents
     }
 

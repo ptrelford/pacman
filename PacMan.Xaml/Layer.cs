@@ -10,7 +10,7 @@ namespace PacMan.App
     {
         private readonly IContents _contents;
 
-        public Layer(Canvas canvas)
+        internal Layer(Canvas canvas)
             : base(canvas)
         {
             _contents = new Contents(canvas.Children);

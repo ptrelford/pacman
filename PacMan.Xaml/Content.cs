@@ -13,7 +13,7 @@ namespace PacMan.App
     {
         private readonly UIElement _element;
 
-        public Content(UIElement element)
+        internal Content(UIElement element)
         {
             _element = element;
         }

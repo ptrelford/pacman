@@ -13,6 +13,7 @@ type IScene =
     abstract member CreateBitmap : Paint * int seq -> IBitmap
     abstract member CreateBitmap : int * int * int[][] -> IBitmap
     abstract member LoadBitmap : string -> IBitmap
+    abstract member CreateText : string -> ITextContent
     abstract member Contents : IContents
 and  IContents = 
     abstract member Add : IContent -> unit
@@ -27,6 +28,9 @@ and IBitmap =
 and ILayer =
     inherit IContent
     abstract member Contents : IContents
+and ITextContent =
+    inherit IContent
+    abstract member SetText: string -> unit
 
 type IInput =
     abstract member IsUp : bool
@@ -67,6 +71,7 @@ type Ghost = {
     }
 
 type Game(scene:IScene, input:IInput) =
+    let createText text = scene.CreateText(text)
     let toBitmap color lines = scene.CreateBitmap(color,lines)
     let toImage (bitmap:IBitmap) = bitmap.CreateContent()
     let load s =
@@ -227,10 +232,10 @@ _______7./7 |      ! /7./_______
 
     let isWallAt (x,y) = tileAt x y |> isWall
     let p = load "p"
-    let pu = load "pu1",load "pu2"
-    let pd = load "pd1",load "pd2"
-    let pl = load "pl1",load "pl2"
-    let pr = load "pr1",load "pr2"
+    let pu = load "pu1", load "pu2"
+    let pd = load "pd1", load "pd2"
+    let pl = load "pl1", load "pl2"
+    let pr = load "pr1", load "pr2"
     let lives = [for _ in 1..2 -> load "pl1"]
     do  lives |> List.iteri (fun i life -> add life; set life (16+16*i,32*8))
 
@@ -423,5 +428,10 @@ _______7./7 |      ! /7./_______
         handleTouching ()
         updateFlash ()
         updatePower ()
+
+    let p1 = createText("1UP")
+    do  p1.Move(2.0*8.0,0.0); scene.Contents.Add(p1)
+    let s1 = createText("00")
+    do  s1.Move(3.0*8.0,8.0); scene.Contents.Add(s1)
 
     member this.Update () = update ()

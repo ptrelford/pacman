@@ -11,7 +11,7 @@ namespace PacMan.App
     {
         private readonly Keys _keys;
 
-        public Input(Keys keys)
+        internal Input(Keys keys)
         {
             _keys = keys;
         }
