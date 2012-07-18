@@ -83,6 +83,7 @@ type Game(scene:IScene, input:IInput) =
         scene.CreateBitmap(w,h,lines).CreateContent()
     let add item = scene.Contents.Add(item)
     let remove item = scene.Contents.Remove(item)
+    let contains item = scene.Contents.Contains(item)
     let set (element:IContent) (x,y) = element.Move(x - 16 |> float, y + 16 |> float)
     let maze = "
 ##/------------7/------------7##
@@ -267,6 +268,7 @@ _______7./7 |      ! /7./_______
     do  add !pacman
     let mutable powerCount = 0
 
+    let mutable score = 0
     let x = ref (16 * 8 - 7)
     let y = ref (24 * 8 - 3)
     let v = ref (0,0)
@@ -369,9 +371,12 @@ _______7./7 |      ! /7./_______
             directions.Head |> move
         let tx, ty = int ((!x+6)/8), int ((!y+6)/8)
         if tileAt tx ty = '.' then
-            remove (tiles.[ty].[tx])
+            if contains (tiles.[ty].[tx]) then
+                score <- score + 10
+                remove (tiles.[ty].[tx])
         if tileAt tx ty = 'o' then
-            if scene.Contents.Contains (tiles.[ty].[tx]) then
+            if contains (tiles.[ty].[tx]) then
+                score <- score + 50
                 powerCount <- 500
             remove (tiles.[ty].[tx])
         set !pacman (!x,!y)
@@ -406,9 +411,10 @@ _______7./7 |      ! /7./_______
         if touching.Length > 0 then
             if powerCount > 0 
             then ghosts <- ghosts |> List.mapi (fun i ghost ->
-                if touching |> List.exists ((=) ghost)
-                then  
-                    let ghost' = ghost_starts.[i]
+                if not ghost.IsReturning && 
+                   touching |> List.exists ((=) ghost)
+                then
+                    score <- score + 200
                     { ghost with IsReturning = true; }
                 else ghost
             )
@@ -424,6 +430,8 @@ _______7./7 |      ! /7./_______
     let p1 = createText("1UP")
     do  p1.Move(2.0*8.0,0.0); scene.Contents.Add(p1)
     let s1 = createText("00")
-    do  s1.Move(3.0*8.0,8.0); scene.Contents.Add(s1)
+    do  s1.Move(0.0,8.0); scene.Contents.Add(s1)
 
-    member this.Update () = update ()
+    member this.Update () = 
+        s1.SetText(sprintf "%8d" score)
+        update ()
