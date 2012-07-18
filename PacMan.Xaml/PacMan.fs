@@ -58,6 +58,10 @@ module Seq =
         |> Seq.cache
         |> Seq.sortBy fst
         |> Seq.map snd
+    // Workaround for issue in VS11(RC) running in F# Portable library from C# Metro App
+    let sortBy f xs = 
+        System.Linq.Enumerable.OrderBy(xs,System.Func<_,_>(f))
+        |> Seq.readonly
 
 type Ghost = {
     Blue : IContent
@@ -320,26 +324,14 @@ _______7./7 |      ! /7./_______
             let directions =
                 if ghost.IsReturning then
                     directions
-                    |> Seq.toArray
-                    |> Array.sortBy snd
+                    |> Seq.sortBy snd
                     |> Seq.map fst
-                    |> Seq.toArray                    
-                    |> Array.sortBy isBackwards
-                    |> Seq.toArray
                 else
                     directions
                     |> Seq.map fst
-                    |> Seq.toArray
                     |> Seq.unsort
-                    |> Seq.toArray
-                    |> Array.sortBy isBackwards
-                    |> Seq.toArray
-            let dx, dy = 
-                let newDirection = 
-                    directions |> Seq.head
-                if not <| isBackwards newDirection 
-                then newDirection
-                else dx,dy
+                    |> Seq.sortBy isBackwards
+            let dx, dy = directions |> Seq.head
             let x,y = go (x,y) (dx,dy)
             let returning =
                 if ghost.IsReturning && 0 = (fillValue (x,y) (0,0))
