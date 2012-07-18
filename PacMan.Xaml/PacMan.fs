@@ -269,6 +269,8 @@ _______7./7 |      ! /7./_______
     let mutable powerCount = 0
 
     let mutable score = 0
+    let mutable bonus = 0
+    let mutable bonuses = []
     let x = ref (16 * 8 - 7)
     let y = ref (24 * 8 - 3)
     let v = ref (0,0)
@@ -378,6 +380,7 @@ _______7./7 |      ! /7./_______
             if contains (tiles.[ty].[tx]) then
                 score <- score + 50
                 powerCount <- 500
+                bonus <- 0
             remove (tiles.[ty].[tx])
         set !pacman (!x,!y)
 
@@ -414,11 +417,24 @@ _______7./7 |      ! /7./_______
                 if not ghost.IsReturning && 
                    touching |> List.exists ((=) ghost)
                 then
-                    score <- score + 200
+                    score <- score + (pown 2 bonus) * 200 
+                    let b = load ([|"200";"400";"800";"1600"|]).[bonus]
+                    set b (ghost.X, ghost.Y)
+                    add b
+                    bonuses <- (100,b) :: bonuses
+                    bonus <- bonus + 1
                     { ghost with IsReturning = true; }
                 else ghost
             )
             else flashCount <- 20
+
+    let updateBonuses () =
+        let removals,remainders =
+            bonuses 
+            |> List.map (fun (count,x) -> count-1,x)
+            |> List.partition (fst >> (=) 0)
+        bonuses <- remainders
+        removals |> List.iter (fun (_,x) -> remove x)
 
     let update () =
         updatePacman ()
@@ -426,6 +442,7 @@ _______7./7 |      ! /7./_______
         handleTouching ()
         updateFlash ()
         updatePower ()
+        updateBonuses ()
 
     let p1 = createText("1UP")
     do  p1.Move(2.0*8.0,0.0); scene.Contents.Add(p1)
