@@ -53,4 +53,24 @@ do  // SplashScreen
     let bitmap = new Bitmap(path)
     drawPacman(bitmap, 200, 42, 214)
     bitmap.Save("PacMan_SplashScreen.png", ImageFormat.Png)
+
+do  // Icon 16x16
+    let bitmap = new Bitmap(16,16)
+    drawPacman(bitmap, 1, 1, 14)
+    bitmap.Save("Icon16x16.png", ImageFormat.Png)
+
+do  // Icon 32x32
+    let bitmap = new Bitmap(32,32)
+    drawPacman(bitmap, 2, 2, 28)
+    bitmap.Save("Icon32x32.png", ImageFormat.Png)
+
+do  // Icon 48x48
+    let bitmap = new Bitmap(48,48)
+    drawPacman(bitmap, 3, 3, 42)
+    bitmap.Save("Icon48x48.png", ImageFormat.Png)
+
+do  // Icon 128x128
+    let bitmap = new Bitmap(128,128)
+    drawPacman(bitmap, 8, 8, 112)
+    bitmap.Save("Icon128x128.png", ImageFormat.Png)
     show bitmap
