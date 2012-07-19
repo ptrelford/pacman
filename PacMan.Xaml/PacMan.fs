@@ -351,7 +351,13 @@ _______7./7 |      ! /7./_______
             { ghost with X = x; Y = y; V = (dx,dy); Image = face; IsReturning = returning }
         )
 
-    let updateGhosts () = ghosts <- newGhosts ()
+    let mutable ghostCounter = 0
+
+    let updateGhosts () = 
+        let modulus = if powerCount > 0 then 4 else 16
+        if ghostCounter % modulus <> 0 then
+            ghosts <- newGhosts ()
+        ghostCounter <- ghostCounter + 1
 
     let updatePacman () =
         let directions = 
@@ -422,7 +428,7 @@ _______7./7 |      ! /7./_______
                     set b (ghost.X, ghost.Y)
                     add b
                     bonuses <- (100,b) :: bonuses
-                    bonus <- bonus + 1
+                    bonus <- min 3 (bonus + 1)
                     { ghost with IsReturning = true; }
                 else ghost
             )
