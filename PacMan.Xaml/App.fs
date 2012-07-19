@@ -22,44 +22,39 @@ type Keys (control:Control) =
 [<AutoOpen>]
 module Rendering = 
     let run (control:Control) rate update =
-        let focus = ref true
         let rate = TimeSpan.FromSeconds(rate)
-        let lastUpdate = ref DateTime.Now
+        let focus = ref true
+        let pause = TimeSpan.FromSeconds(0.5)
+        let lastUpdate = ref (DateTime.Now + pause)
         let residual = ref (TimeSpan.Zero)
-        #if SILVERLIGHT
-        let subscriptions =
-            [
-            control.GotFocus.Subscribe(fun _ -> 
-                focus := true
-                lastUpdate := DateTime.Now
-                residual := TimeSpan.Zero
-            )
-            control.LostFocus.Subscribe(fun _ -> 
-                focus := false
-            )
-            ]
-        #else
-        let window = Application.Current.MainWindow
-        let subscriptions =
-            [
-            window.Activated.Subscribe(fun _ -> 
-                focus := true
-                lastUpdate := DateTime.Now
-                residual := TimeSpan.Zero
-            )
-            window.Deactivated.Subscribe(fun _ -> 
-                focus := false
-            )
-            ]
-        #endif
-        CompositionTarget.Rendering.Subscribe (fun _ ->
-            let now = DateTime.Now
-            residual := !residual + (now - !lastUpdate)
-            if !focus then
-                while !residual > rate do
-                    update(); residual := !residual - rate
-            lastUpdate := now
-        )
+        let gotFocus _ =
+            focus := true
+            let pause = TimeSpan.FromSeconds(0.5)
+            lastUpdate := DateTime.Now + pause
+            residual := TimeSpan.Zero
+        let lostFocus _ = 
+            focus := false
+        let subscriptions = [
+            #if SILVERLIGHT
+            control.GotFocus.Subscribe(gotFocus)
+            control.LostFocus.Subscribe(lostFocus)
+            #else
+            Application.Current.MainWindow.Activated.Subscribe(gotFocus)
+            Application.Current.MainWindow.Deactivated.Subscribe(lostFocus)
+            #endif
+            CompositionTarget.Rendering.Subscribe (fun _ ->
+                let now = DateTime.Now
+                if now >= !lastUpdate then
+                    residual := !residual + (now - !lastUpdate)
+                    if !focus then
+                        while !residual > rate do
+                            update(); residual := !residual - rate
+                    lastUpdate := now
+            )]
+        { new IDisposable with
+            member this.Dispose() =
+                subscriptions |> List.iter (fun d -> d.Dispose())
+        }
     
 [<AutoOpen>]
 module Imaging =
