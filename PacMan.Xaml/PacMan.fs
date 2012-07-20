@@ -360,14 +360,13 @@ _______7./7 |      ! /7./_______
         ghostCounter <- ghostCounter + 1
 
     let updatePacman () =
-        let directions = 
+        let inputs = 
             [
-            if input.IsUp && canGoUp (!x,!y) then yield (0,-1), pu
-            if input.IsDown && canGoDown (!x,!y) then yield (0,1), pd
-            if input.IsLeft && canGoLeft (!x,!y) then yield (-1,0), pl
-            if input.IsRight && canGoRight (!x,!y) then yield (1,0), pr
+            if input.IsUp then yield canGoUp (!x,!y), (0,-1), pu
+            if input.IsDown then yield canGoDown (!x,!y), (0,1), pd
+            if input.IsLeft  then yield canGoLeft (!x,!y), (-1,0), pl
+            if input.IsRight then yield canGoRight (!x,!y), (1,0), pr
             ] 
-            |> List.sortBy (fun (v',_) -> v' = !v)
         let move ((dx,dy),(d1,d2)) =
             let x', y' = go (!x,!y) (dx,dy)
             x := x'; y := y'; v := (dx,dy)
@@ -375,8 +374,24 @@ _______7./7 |      ! /7./_______
             let d = if (!x/6 + !y/6) % 2 = 0 then d1 else d2
             add d
             pacman := d
-        if directions.Length > 0 then
-            directions.Head |> move
+        let availableDirections =
+            inputs
+            |> List.filter (fun (can,_,_) -> can)
+            |> List.map (fun (_,v,f) -> v,f)
+            |> List.sortBy (fun (v',_) -> v' = !v)
+        if availableDirections.Length > 0 then
+            availableDirections.Head |> move
+        else
+            let goForward =
+                match !v with
+                | 0,-1 -> canGoUp(!x,!y), pu
+                | 0,1  -> canGoDown(!x,!y), pd
+                | -1,0 -> canGoLeft(!x,!y), pl
+                | 1, 0 -> canGoRight(!x,!y), pr
+                | 0, 0 -> false, pu
+                | _ -> invalidOp ""
+            if fst goForward && inputs.Length > 0 then
+                (!v, snd goForward) |> move 
         let tx, ty = int ((!x+6)/8), int ((!y+6)/8)
         if tileAt tx ty = '.' then
             if contains (tiles.[ty].[tx]) then
