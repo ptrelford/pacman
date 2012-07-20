@@ -172,12 +172,19 @@ and  TextContent (block:TextBlock) =
  
 type GameControl () as control =
     inherit UserControl(Background=SolidColorBrush Colors.Black, IsTabStop=true)
+    let width, height = 28.0 * 8.0, (32.0+4.0) * 8.0
 #if SILVERLIGHT
-    do control.RenderTransform <- ScaleTransform(ScaleX=1.5,ScaleY=1.5)
+    do control.RenderTransform <- 
+        ScaleTransform(
+            ScaleX=2.0,
+            ScaleY=2.0,
+            CenterX=width/2.0,
+            CenterY=height/2.0
+        )
 #endif
     let keys = Keys(control)
     let canvas = Canvas(Background = SolidColorBrush Colors.Black)
-    do  canvas.Width <- 28.0 * 8.0; canvas.Height <- (32.0+4.0) * 8.0
+    do  canvas.Width <- width; canvas.Height <- height
     let clip = RectangleGeometry(Rect=Rect(Width=canvas.Width,Height=canvas.Height))
     do  canvas.Clip <- clip
     do  control.Width <- canvas.Width; control.Height <- canvas.Height
@@ -200,7 +207,11 @@ type GameControl () as control =
 #if SILVERLIGHT
 type App() as this = 
     inherit Application()
-    do  this.Startup.AddHandler(fun o e -> this.RootVisual <- GameControl())
+    do  this.Startup.AddHandler(fun o e ->
+            let grid = Grid(Background = SolidColorBrush Colors.Black)
+            grid.Children.Add(GameControl())
+            this.RootVisual <- grid
+        )
 #else
 module App =
     [<System.STAThread>]
