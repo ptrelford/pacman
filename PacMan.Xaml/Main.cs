@@ -18,7 +18,7 @@ namespace PacMan.App
         {
             var keys = new Keys(control);
             var game = new Game(new Scene(canvas), new Input(keys));
-            Rendering.Run(TimeSpan.FromSeconds(1.0 / 50.0), game.Update);
+            Rendering.Run(control, TimeSpan.FromSeconds(1.0 / 50.0), game.Update);
         }
 
         public static Canvas CreateCanvas()
