@@ -55,11 +55,14 @@
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Silverlight\$(SilverlightVersion)\Microsoft.Silverlight.Common.targets" />
   <ProjectExtensions>
     <VisualStudio>
+      <FlavorProperties Guid="{a1591282-1198-4647-a2b1-27e5ff5f6f3b}">
+        <SilverlightProjectProperties />
+      </FlavorProperties>
       <FlavorProperties Guid="{a1591282-1198-4647-a2b1-27e5ff5f6f3b}" User="">
         <SilverlightProjectProperties>
           <StartPageUrl>
           </StartPageUrl>
-          <StartAction>OfflineApplication</StartAction>
+          <StartAction>DynamicPage</StartAction>
           <AspNetDebugging>True</AspNetDebugging>
           <NativeDebugging>False</NativeDebugging>
           <SQLDebugging>False</SQLDebugging>

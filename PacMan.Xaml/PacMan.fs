@@ -264,16 +264,16 @@ _______7./7 |      ! /7./_______
         set ghost.Image (ghost.X,ghost.Y)
         )
 
-    let pacman = ref p
-    do  add !pacman
-    let mutable powerCount = 0
-
     let mutable score = 0
     let mutable bonus = 0
     let mutable bonuses = []
     let x = ref (16 * 8 - 7)
     let y = ref (24 * 8 - 3)
     let v = ref (0,0)
+    let pacman = ref p
+    do  add !pacman
+    do  set !pacman (!x,!y)
+    let mutable powerCount = 0
 
     let noWall (x,y) (ex,ey) =
         let bx, by = int ((x+6+ex)/8), int ((y+6+ey)/8)
