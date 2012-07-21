@@ -5,6 +5,11 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "PacMan.PortableLibrary", "P
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PacMan.App.Metro", "PacMan.Xaml\PacMan.App.Metro.csproj", "{0E3C4E7C-C5F0-4AFF-9ECB-0FB6EC9944F6}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{A138ADE3-4089-4B58-9DB2-A0771C17F6A7}"
+	ProjectSection(SolutionItems) = preProject
+		PacMan.Xaml\GenerateMetroLogos.fsx = PacMan.Xaml\GenerateMetroLogos.fsx
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|ARM = Debug|ARM

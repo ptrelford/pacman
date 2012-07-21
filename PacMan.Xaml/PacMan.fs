@@ -378,9 +378,9 @@ _______7./7 |      ! /7./_______
             inputs
             |> List.filter (fun (can,_,_) -> can)
             |> List.map (fun (_,v,f) -> v,f)
-            |> List.sortBy (fun (v',_) -> v' = !v)
-        if availableDirections.Length > 0 then
-            availableDirections.Head |> move
+            |> Seq.sortBy (fun (v',_) -> v' = !v)
+        if Seq.length availableDirections > 0 then
+            availableDirections |> Seq.head |> move
         else
             let goForward =
                 match !v with

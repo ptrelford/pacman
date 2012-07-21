@@ -1,4 +1,5 @@
-﻿using Windows.UI.Xaml.Controls;
+﻿using Windows.Foundation;
+using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
 
@@ -11,22 +12,46 @@ namespace PacMan.App.Metro
     /// </summary>
     public sealed partial class MainPage : Page
     {
+        ScaleTransform _transform;
+        double _width;
+        double _height;
+
         public MainPage()
         {
             this.InitializeComponent();
 
             var canvas = Main.CreateCanvas();
-            canvas.RenderTransform = new ScaleTransform
+            _width = canvas.Width;
+            _height = canvas.Height;
+
+            _transform = new ScaleTransform
             {
                 CenterX = canvas.Width / 2.0,
-                CenterY = canvas.Height / 2.0,
-                ScaleX = 3.0,
-                ScaleY = 3.0
+                CenterY = canvas.Height / 2.0                
             };
-            this.Width = canvas.Width;
-            this.Height = canvas.Height;
+            canvas.RenderTransform = _transform;
+            
+            //this.LayoutRoot.Children.Add(canvas);
             this.Content = canvas;
+            this.InvalidateMeasure();
+
             Main.StartGame(this, canvas);
+        }
+
+        protected override Size MeasureOverride(Size availableSize)
+        {
+            var scale = 1.0;
+            while ((_width * scale) < availableSize.Width &&
+                   (_height * scale) < availableSize.Height)
+                scale += 0.5;
+            scale = scale - 0.5;
+            if (scale < 1.0) scale = 1.0;
+            if (_transform.ScaleX != scale)
+            {
+                _transform.ScaleX = scale;
+                _transform.ScaleY = scale;
+            }
+            return base.MeasureOverride(availableSize);
         }
 
         /// <summary>

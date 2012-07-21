@@ -30,26 +30,30 @@ let show (bitmap:Bitmap) =
     form.Controls.Add(box)
     form.Show()
 
+//let root = @"C:\Users\Moon\Documents\Visual Studio 2010\Projects\pacman\PacMan.Xaml\Assets\"
+let root = @"C:\Users\Phil\Documents\Visual Studio 2012\Projects\pacman\PacMan.Xaml\Assets\"
+
 do  // Logo
-    let path = @"C:\Users\Moon\Documents\Visual Studio 2010\Projects\pacman\PacMan.Xaml\Assets\Logo.png"
+    
+    let path =root + "Logo.png"
     let bitmap = new Bitmap(path)
     drawPacman(bitmap, 42, 38, 64)
     bitmap.Save("PacMan_Logo.png", ImageFormat.Png)
 
 do  // SmallLogo
-    let path = @"C:\Users\Moon\Documents\Visual Studio 2010\Projects\pacman\PacMan.Xaml\Assets\SmallLogo.png"
+    let path = root + "SmallLogo.png"
     let bitmap = new Bitmap(path)
     drawPacman(bitmap, 3, 3, 24)
     bitmap.Save("PacMan_SmallLogo.png", ImageFormat.Png)
 
 do  // StoreLogo
-    let path = @"C:\Users\Moon\Documents\Visual Studio 2010\Projects\pacman\PacMan.Xaml\Assets\StoreLogo.png"
+    let path = root + "StoreLogo.png"
     let bitmap = new Bitmap(path)
     drawPacman(bitmap, 5, 5, 40)
     bitmap.Save("PacMan_StoreLogo.png", ImageFormat.Png)
 
 do  // SplashScreen
-    let path = @"C:\Users\Moon\Documents\Visual Studio 2010\Projects\pacman\PacMan.Xaml\Assets\SplashScreen.png"
+    let path = root + "SplashScreen.png"
     let bitmap = new Bitmap(path)
     drawPacman(bitmap, 200, 42, 214)
     bitmap.Save("PacMan_SplashScreen.png", ImageFormat.Png)
