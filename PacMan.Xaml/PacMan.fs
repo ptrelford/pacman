@@ -242,14 +242,22 @@ _______7./7 |      ! /7./_______
     let pl = load "pl1", load "pl2"
     let pr = load "pr1", load "pr2"
     
+    let mutable finished = false
     let mutable lives = [for _ in 1..9 -> load "pl1"]
     do  lives |> List.iteri (fun i life -> add life; set life (16+16*i,32*8))
     do  lives <- lives |> List.rev
     let decLives () =
         lives <-
             match lives with
-            | [] -> []
-            | x::xs -> remove x; xs
+            | [] -> 
+                let text = createText "GAME OVER"
+                set text (12*8, 15*8)
+                add text
+                finished <- true
+                []
+            | x::xs -> 
+                remove x
+                xs
 
     let ghost_starts = 
         [
@@ -472,10 +480,6 @@ _______7./7 |      ! /7./_______
     do  p1.Move(0.0,0.0); scene.Contents.Add(p1)
     let s1 = createText("")
     do  s1.Move(5.0*8.0,0.0); scene.Contents.Add(s1)
-    //let hi = createText("HIGH")
-    //do  hi.Move(15.00*8.0,0.0); scene.Contents.Add(hi)
-    //let s2 = createText(sprintf "%7d" 0)
-    //do  s2.Move(20.0*8.0,0.0); scene.Contents.Add(s2)
 
     let updateScore () =
         s1.SetText(sprintf "%7d" score)
@@ -492,4 +496,4 @@ _______7./7 |      ! /7./_______
         updateScore ()
 
     member this.Update () = 
-        update ()
+        if not finished then update ()
