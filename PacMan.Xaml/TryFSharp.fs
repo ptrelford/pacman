@@ -693,6 +693,7 @@ type IScene =
     abstract member CreateBitmap : Paint * int seq -> IBitmap
     abstract member CreateBitmap : int * int * int[][] -> IBitmap
     abstract member LoadBitmap : string -> IBitmap
+    abstract member CreateText : string -> ITextContent
     abstract member Contents : IContents
 and  IContents = 
     abstract member Add : IContent -> unit
@@ -707,6 +708,9 @@ and IBitmap =
 and ILayer =
     inherit IContent
     abstract member Contents : IContents
+and ITextContent =
+    inherit IContent
+    abstract member SetText: string -> unit
 
 type IInput =
     abstract member IsUp : bool
@@ -734,6 +738,10 @@ module Seq =
         |> Seq.cache
         |> Seq.sortBy fst
         |> Seq.map snd
+    // Workaround for issue in VS11(RC) running in F# Portable library from C# Metro App
+    let sortBy f xs = 
+        System.Linq.Enumerable.OrderBy(xs,System.Func<_,_>(f))
+        |> Seq.readonly
 
 type Ghost = {
     Blue : IContent
@@ -748,6 +756,7 @@ type Ghost = {
 
 // [snippet:PacMan game]
 type Game(scene:IScene, input:IInput) =
+    let createText text = scene.CreateText(text)
     let toBitmap color lines = scene.CreateBitmap(color,lines)
     let toImage (bitmap:IBitmap) = bitmap.CreateContent()
     let load s =
@@ -755,7 +764,8 @@ type Game(scene:IScene, input:IInput) =
         scene.CreateBitmap(w,h,lines).CreateContent()
     let add item = scene.Contents.Add(item)
     let remove item = scene.Contents.Remove(item)
-    let set (element:IContent) (x,y) = element.Move(x - 16 |> float, y + 16 |> float)
+    let contains item = scene.Contents.Contains(item)
+    let set (element:IContent) (x,y) = element.Move(x - 16 |> float, y + 8 |> float)
     let maze = "
 ##/------------7/------------7##
 ##|............|!............|##
@@ -875,6 +885,8 @@ _______7./7 |      ! /7./_______
         | '_' | '|' | '!' | '/' | '7' | 'L' | 'J' | '-' | '*' -> true
         | _ -> false
 
+    let isEdible = function '.' | 'o' -> true | _ -> false
+    let mutable totalDots = 0
     let walls = scene.AddLayer()
     let lines = maze.Split('\n')
     let tiles =
@@ -882,6 +894,7 @@ _______7./7 |      ! /7./_______
             line.ToCharArray() |> Array.mapi (fun x item ->
                 let tile = toTile item |> toImage
                 set tile (x * 8, y * 8)
+                if isEdible item then totalDots <- totalDots + 1
                 if isWall item 
                 then walls.Contents.Add tile |> ignore
                 else scene.Contents.Add tile |> ignore
@@ -908,12 +921,27 @@ _______7./7 |      ! /7./_______
 
     let isWallAt (x,y) = tileAt x y |> isWall
     let p = load "p"
-    let pu = load "pu1",load "pu2"
-    let pd = load "pd1",load "pd2"
-    let pl = load "pl1",load "pl2"
-    let pr = load "pr1",load "pr2"
-    let lives = [for _ in 1..2 -> load "pl1"]
+    let pu = load "pu1", load "pu2"
+    let pd = load "pd1", load "pd2"
+    let pl = load "pl1", load "pl2"
+    let pr = load "pr1", load "pr2"
+    
+    let mutable finished = false
+    let mutable lives = [for _ in 1..9 -> load "pl1"]
     do  lives |> List.iteri (fun i life -> add life; set life (16+16*i,32*8))
+    do  lives <- lives |> List.rev
+    let decLives () =
+        lives <-
+            match lives with
+            | [] -> 
+                let text = createText "GAME OVER"
+                set text (12*8, 15*8)
+                add text
+                finished <- true
+                []
+            | x::xs -> 
+                remove x
+                xs
 
     let ghost_starts = 
         [
@@ -935,13 +963,16 @@ _______7./7 |      ! /7./_______
         set ghost.Image (ghost.X,ghost.Y)
         )
 
-    let pacman = ref p
-    do  add !pacman
-    let mutable powerCount = 0
-
+    let mutable score = 0
+    let mutable bonus = 0
+    let mutable bonuses = []
     let x = ref (16 * 8 - 7)
     let y = ref (24 * 8 - 3)
     let v = ref (0,0)
+    let pacman = ref p
+    do  add !pacman
+    do  set !pacman (!x,!y)
+    let mutable powerCount = 0
 
     let noWall (x,y) (ex,ey) =
         let bx, by = int ((x+6+ex)/8), int ((y+6+ey)/8)
@@ -996,26 +1027,14 @@ _______7./7 |      ! /7./_______
             let directions =
                 if ghost.IsReturning then
                     directions
-                    |> Seq.toArray
-                    |> Array.sortBy snd
+                    |> Seq.sortBy snd
                     |> Seq.map fst
-                    |> Seq.toArray
-                    //|> Array.sortBy isBackwards
-                    //|> Seq.toArray
                 else
                     directions
                     |> Seq.map fst
-                    |> Seq.toArray
                     |> Seq.unsort
-                    |> Seq.toArray
-                    |> Array.sortBy isBackwards
-                    |> Seq.toArray
-            let dx, dy = 
-                let newDirection = 
-                    directions |> Seq.head
-                if not <| isBackwards newDirection 
-                then newDirection
-                else dx,dy
+                    |> Seq.sortBy isBackwards
+            let dx, dy = directions |> Seq.head
             let x,y = go (x,y) (dx,dy)
             let returning =
                 if ghost.IsReturning && 0 = (fillValue (x,y) (0,0))
@@ -1031,17 +1050,22 @@ _______7./7 |      ! /7./_______
             { ghost with X = x; Y = y; V = (dx,dy); Image = face; IsReturning = returning }
         )
 
-    let updateGhosts () = ghosts <- newGhosts ()
+    let mutable ghostCounter = 0
+
+    let updateGhosts () = 
+        let modulus = if powerCount > 0 then 4 else 16
+        if ghostCounter % modulus <> 0 then
+            ghosts <- newGhosts ()
+        ghostCounter <- ghostCounter + 1
 
     let updatePacman () =
-        let directions = 
+        let inputs = 
             [
-            if input.IsUp && canGoUp (!x,!y) then yield (0,-1), pu
-            if input.IsDown && canGoDown (!x,!y) then yield (0,1), pd
-            if input.IsLeft && canGoLeft (!x,!y) then yield (-1,0), pl
-            if input.IsRight && canGoRight (!x,!y) then yield (1,0), pr
+            if input.IsUp then yield canGoUp (!x,!y), (0,-1), pu
+            if input.IsDown then yield canGoDown (!x,!y), (0,1), pd
+            if input.IsLeft  then yield canGoLeft (!x,!y), (-1,0), pl
+            if input.IsRight then yield canGoRight (!x,!y), (1,0), pr
             ] 
-            |> List.sortBy (fun (v',_) -> v' = !v)
         let move ((dx,dy),(d1,d2)) =
             let x', y' = go (!x,!y) (dx,dy)
             x := x'; y := y'; v := (dx,dy)
@@ -1049,16 +1073,44 @@ _______7./7 |      ! /7./_______
             let d = if (!x/6 + !y/6) % 2 = 0 then d1 else d2
             add d
             pacman := d
-        if directions.Length > 0 then
-            directions.Head |> move
+        let availableDirections =
+            inputs
+            |> List.filter (fun (can,_,_) -> can)
+            |> List.map (fun (_,v,f) -> v,f)
+            |> Seq.sortBy (fun (v',_) -> v' = !v)
+        if Seq.length availableDirections > 0 then
+            availableDirections |> Seq.head |> move
+        else
+            let goForward =
+                match !v with
+                | 0,-1 -> canGoUp(!x,!y), pu
+                | 0,1  -> canGoDown(!x,!y), pd
+                | -1,0 -> canGoLeft(!x,!y), pl
+                | 1, 0 -> canGoRight(!x,!y), pr
+                | 0, 0 -> false, pu
+                | _ -> invalidOp ""
+            if fst goForward && inputs.Length > 0 then
+                (!v, snd goForward) |> move 
         let tx, ty = int ((!x+6)/8), int ((!y+6)/8)
         if tileAt tx ty = '.' then
-            remove (tiles.[ty].[tx])
+            if contains (tiles.[ty].[tx]) then
+                score <- score + 10
+                remove (tiles.[ty].[tx])
+                totalDots <- totalDots - 1
         if tileAt tx ty = 'o' then
-            if scene.Contents.Contains (tiles.[ty].[tx]) then
+            if contains (tiles.[ty].[tx]) then
+                score <- score + 50
                 powerCount <- 500
+                bonus <- 0
+                totalDots <- totalDots - 1
             remove (tiles.[ty].[tx])
         set !pacman (!x,!y)
+        if totalDots = 0 then
+            let text = createText "LEVEL COMPLETED"
+            set text (7*8, 15*8)
+            add text
+            finished <- true
+
 
     let updatePower () =
         if powerCount > 0 then
@@ -1068,12 +1120,13 @@ _______7./7 |      ! /7./_______
         powerCount <- powerCount - 1
 
     let mutable flashCount = 0
+
     let updateFlash () =
         if flashCount > 0 then
             if ((flashCount / 5) % 2) = 1 then (!pacman).SetOpacity(0.5)
             else (!pacman).SetOpacity(1.0)
+            flashCount <- flashCount - 1
         else (!pacman).SetOpacity(1.0)
-        flashCount <- flashCount - 1
 
     let touchGhosts () =
         let px, py = !x, !y
@@ -1085,24 +1138,57 @@ _______7./7 |      ! /7./_______
              (y < py + 13 && y >= py))
         )
 
-    let update () =
-        updatePacman ()
-        updateGhosts ()
+    let handleTouching () =
         let touching = touchGhosts()
         if touching.Length > 0 then
             if powerCount > 0 
             then ghosts <- ghosts |> List.mapi (fun i ghost ->
-                if touching |> List.exists ((=) ghost)
-                then  
-                    let ghost' = ghost_starts.[i]
+                if not ghost.IsReturning && 
+                   touching |> List.exists ((=) ghost)
+                then
+                    score <- score + (pown 2 bonus) * 200 
+                    let b = load ([|"200";"400";"800";"1600"|]).[bonus]
+                    set b (ghost.X, ghost.Y)
+                    add b
+                    bonuses <- (100,b) :: bonuses
+                    bonus <- min 3 (bonus + 1)
                     { ghost with IsReturning = true; }
                 else ghost
             )
-            else flashCount <- 20
+            else
+                if flashCount = 0 then
+                    decLives()
+                    flashCount <- 30
+
+    let updateBonuses () =
+        let removals,remainders =
+            bonuses 
+            |> List.map (fun (count,x) -> count-1,x)
+            |> List.partition (fst >> (=) 0)
+        bonuses <- remainders
+        removals |> List.iter (fun (_,x) -> remove x)
+
+    let p1 = createText("SCORE")
+    do  p1.Move(0.0,0.0); scene.Contents.Add(p1)
+    let s1 = createText("")
+    do  s1.Move(5.0*8.0,0.0); scene.Contents.Add(s1)
+
+    let updateScore () =
+        s1.SetText(sprintf "%7d" score)
+
+    do  updateScore ()
+
+    let update () =
+        updatePacman ()
+        updateGhosts ()
+        handleTouching ()
         updateFlash ()
         updatePower ()
+        updateBonuses ()
+        updateScore ()
 
-    member this.Update () = update ()
+    member this.Update () = 
+        if not finished then update ()
 // [/snippet]
 
 open System
@@ -1120,29 +1206,36 @@ type Keys (control:Control) =
     member keys.IsKeyDown key = keysDown.Contains key
 
 [<AutoOpen>]
-module Text =
-    let createTextBlock () =
-        let whiteBrush = SolidColorBrush Colors.White
-        TextBlock(
-            FontFamily=FontFamily("Courier New"),
-            Foreground=whiteBrush, 
-            FontSize=8.0,
-            FontWeight=FontWeights.ExtraBold
-            )
-
-[<AutoOpen>]
 module Rendering = 
-    let run rate update =
+    let run (control:Control) rate update =
         let rate = TimeSpan.FromSeconds(rate)
-        let lastUpdate = ref DateTime.Now
-        let residual = ref (TimeSpan())
-        CompositionTarget.Rendering.Subscribe (fun _ -> 
-            let now = DateTime.Now
-            residual := !residual + (now - !lastUpdate)
-            while !residual > rate do
-                update(); residual := !residual - rate
-            lastUpdate := now
-        )
+        let focus = ref true
+        let pause = TimeSpan.FromSeconds(0.5)
+        let lastUpdate = ref (DateTime.Now + pause)
+        let residual = ref (TimeSpan.Zero)
+        let gotFocus _ =
+            focus := true
+            let pause = TimeSpan.FromSeconds(0.5)
+            lastUpdate := DateTime.Now + pause
+            residual := TimeSpan.Zero
+        let lostFocus _ = 
+            focus := false
+        let subscriptions = [
+            control.GotFocus.Subscribe(gotFocus)
+            control.LostFocus.Subscribe(lostFocus)
+            CompositionTarget.Rendering.Subscribe (fun _ ->
+                let now = DateTime.Now
+                if now >= !lastUpdate then
+                    residual := !residual + (now - !lastUpdate)
+                    if !focus then
+                        while !residual > rate do
+                            update(); residual := !residual - rate
+                    lastUpdate := now
+            )]
+        { new IDisposable with
+            member this.Dispose() =
+                subscriptions |> List.iter (fun d -> d.Dispose())
+        }
     
 [<AutoOpen>]
 module Imaging =
@@ -1171,13 +1264,9 @@ module Imaging =
         let w, h = float bitmap.PixelWidth, float bitmap.PixelHeight  
         Image(Source=bitmap,Stretch=Stretch.Fill,Width=w,Height=h) 
     let loadBitmap path =
-        #if SILVERLIGHT
         let stream = Application.GetResourceStream(new Uri(path, UriKind.Relative)).Stream
         let image = BitmapImage()
         image.SetSource(stream)
-        #else
-        let image = BitmapImage(Uri(path, UriKind.Relative))
-        #endif
         image
     let loadImage path =
         path |> loadBitmap |> toImage
@@ -1198,6 +1287,17 @@ type Scene (canvas:Canvas) =
         member scene.CreateBitmap(width,height,lines) =
             let bitmap = createBitmap (width,height) lines
             Bitmap(bitmap) :> IBitmap
+        member scene.CreateText(text:string) =
+            let whiteBrush = SolidColorBrush Colors.White
+            let block = 
+                TextBlock(
+                    FontFamily=FontFamily("Courier New"),
+                    Foreground=whiteBrush, 
+                    FontSize=15.0,
+                    FontWeight=FontWeights.ExtraBold,
+                    Text=text
+                )
+            TextContent(block) :> ITextContent
         member scene.Contents = contents :> IContents
 and  Bitmap (source:BitmapSource) =
     interface IBitmap with
@@ -1231,28 +1331,32 @@ and  Content (element:UIElement) =
         member content.SetOpacity (value) = 
             element.Opacity <- value
         member content.Control = element :> obj
+and  TextContent (block:TextBlock) =
+    let content = Content(block) :> IContent
+    interface ITextContent with
+        member this.Move(x,y) = content.Move(x,y)
+        member this.SetOpacity(value) = content.SetOpacity(value)
+        member this.Control = block :> obj
+        member this.SetText value = block.Text <- value
  
 type GameControl () as control =
     inherit UserControl(Background=SolidColorBrush Colors.Black, IsTabStop=true)
-#if SILVERLIGHT
-    do control.RenderTransform <- ScaleTransform(ScaleX=1.5,ScaleY=1.5)
-#endif
     let keys = Keys(control)
+    let width, height = 28.0 * 8.0, (32.0+3.0) * 8.0
+    let grid = Grid(Background = SolidColorBrush Colors.Black)
     let canvas = Canvas(Background = SolidColorBrush Colors.Black)
-    do  canvas.Width <- 28.0 * 8.0; canvas.Height <- (32.0+4.0) * 8.0
+    do  canvas.Width <- width; canvas.Height <- height
     let clip = RectangleGeometry(Rect=Rect(Width=canvas.Width,Height=canvas.Height))
     do  canvas.Clip <- clip
-    do  control.Width <- canvas.Width; control.Height <- canvas.Height
-    do  control.Content <- canvas
+    let transform =
+        ScaleTransform(
+            ScaleX=1.5,
+            ScaleY=1.5
+        )
+    do  canvas.RenderTransform <- transform
+    do  grid.Children.Add(canvas) |> ignore
+    do  control.Content <- grid
     let scene = Scene(canvas) :> IScene
-    let p1 = createTextBlock()
-    do  p1.Text <- "1UP"
-    let p1 = Content(p1) :> IContent
-    do  p1.Move(2.0*8.0,0.0); scene.Contents.Add(p1)
-    let s1 = createTextBlock()
-    do  s1.Text <- "00"
-    let s1 = Content(s1) :> IContent
-    do  s1.Move(3.0*8.0,8.0); scene.Contents.Add(s1)
     let input = 
         let up, down, left, right = Key.Up, Key.Down, Key.Left, Key.Right
         let pressed key = keys.IsKeyDown key
@@ -1263,8 +1367,7 @@ type GameControl () as control =
             member this.IsRight = pressed right
         }
     let game = Game(scene, input)
-    
-    do run (1.0/50.0) game.Update |> ignore
+    do  run control (1.0/50.0) game.Update |> ignore
 
 #if INTERACTIVE
 open Microsoft.TryFSharp
