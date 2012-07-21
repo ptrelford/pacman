@@ -241,8 +241,15 @@ _______7./7 |      ! /7./_______
     let pd = load "pd1", load "pd2"
     let pl = load "pl1", load "pl2"
     let pr = load "pr1", load "pr2"
-    let lives = [for _ in 1..2 -> load "pl1"]
+    
+    let mutable lives = [for _ in 1..9 -> load "pl1"]
     do  lives |> List.iteri (fun i life -> add life; set life (16+16*i,32*8))
+    do  lives <- lives |> List.rev
+    let decLives () =
+        lives <-
+            match lives with
+            | [] -> []
+            | x::xs -> remove x; xs
 
     let ghost_starts = 
         [
@@ -413,12 +420,13 @@ _______7./7 |      ! /7./_______
         powerCount <- powerCount - 1
 
     let mutable flashCount = 0
+
     let updateFlash () =
         if flashCount > 0 then
             if ((flashCount / 5) % 2) = 1 then (!pacman).SetOpacity(0.5)
             else (!pacman).SetOpacity(1.0)
+            flashCount <- flashCount - 1
         else (!pacman).SetOpacity(1.0)
-        flashCount <- flashCount - 1
 
     let touchGhosts () =
         let px, py = !x, !y
@@ -447,7 +455,10 @@ _______7./7 |      ! /7./_______
                     { ghost with IsReturning = true; }
                 else ghost
             )
-            else flashCount <- 20
+            else
+                if flashCount = 0 then
+                    decLives()
+                    flashCount <- 30
 
     let updateBonuses () =
         let removals,remainders =
