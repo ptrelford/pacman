@@ -28,7 +28,7 @@ namespace PacMan.App
                 new TextBlock {
                     FontFamily=new FontFamily("Courier New"),
                     Foreground=new SolidColorBrush(Colors.White), 
-                    FontSize=8.0,
+                    FontSize=15.0,
                     FontWeight=FontWeights.ExtraBold,
                     Text=text
                 };

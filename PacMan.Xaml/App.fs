@@ -124,7 +124,7 @@ type Scene (canvas:Canvas) =
                 TextBlock(
                     FontFamily=FontFamily("Courier New"),
                     Foreground=whiteBrush, 
-                    FontSize=8.0,
+                    FontSize=15.0,
                     FontWeight=FontWeights.ExtraBold,
                     Text=text
                 )
@@ -173,7 +173,7 @@ and  TextContent (block:TextBlock) =
 type GameControl () as control =
     inherit UserControl(Background=SolidColorBrush Colors.Black, IsTabStop=true)
     let keys = Keys(control)
-    let width, height = 28.0 * 8.0, (32.0+4.0) * 8.0
+    let width, height = 28.0 * 8.0, (32.0+3.0) * 8.0
     let grid = Grid(Background = SolidColorBrush Colors.Black)
     let canvas = Canvas(Background = SolidColorBrush Colors.Black)
     do  canvas.Width <- width; canvas.Height <- height

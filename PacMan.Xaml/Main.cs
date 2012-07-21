@@ -27,7 +27,7 @@ namespace PacMan.App
             {
                 Background = new SolidColorBrush(Colors.Black),
                 Width = 28 * 8,
-                Height = (32 + 4) * 8
+                Height = (32 + 3) * 8
             };
             var clip = new RectangleGeometry
             {

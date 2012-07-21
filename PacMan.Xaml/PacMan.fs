@@ -84,7 +84,7 @@ type Game(scene:IScene, input:IInput) =
     let add item = scene.Contents.Add(item)
     let remove item = scene.Contents.Remove(item)
     let contains item = scene.Contents.Contains(item)
-    let set (element:IContent) (x,y) = element.Move(x - 16 |> float, y + 16 |> float)
+    let set (element:IContent) (x,y) = element.Move(x - 16 |> float, y + 8 |> float)
     let maze = "
 ##/------------7/------------7##
 ##|............|!............|##
@@ -457,6 +457,20 @@ _______7./7 |      ! /7./_______
         bonuses <- remainders
         removals |> List.iter (fun (_,x) -> remove x)
 
+    let p1 = createText("SCORE")
+    do  p1.Move(0.0,0.0); scene.Contents.Add(p1)
+    let s1 = createText("")
+    do  s1.Move(5.0*8.0,0.0); scene.Contents.Add(s1)
+    //let hi = createText("HIGH")
+    //do  hi.Move(15.00*8.0,0.0); scene.Contents.Add(hi)
+    //let s2 = createText(sprintf "%7d" 0)
+    //do  s2.Move(20.0*8.0,0.0); scene.Contents.Add(s2)
+
+    let updateScore () =
+        s1.SetText(sprintf "%7d" score)
+
+    do  updateScore ()
+
     let update () =
         updatePacman ()
         updateGhosts ()
@@ -464,12 +478,7 @@ _______7./7 |      ! /7./_______
         updateFlash ()
         updatePower ()
         updateBonuses ()
-
-    let p1 = createText("1UP")
-    do  p1.Move(2.0*8.0,0.0); scene.Contents.Add(p1)
-    let s1 = createText("00")
-    do  s1.Move(0.0,8.0); scene.Contents.Add(s1)
+        updateScore ()
 
     member this.Update () = 
-        s1.SetText(sprintf "%8d" score)
         update ()
