@@ -204,6 +204,8 @@ _______7./7 |      ! /7./_______
         | '_' | '|' | '!' | '/' | '7' | 'L' | 'J' | '-' | '*' -> true
         | _ -> false
 
+    let isEdible = function '.' | 'o' -> true | _ -> false
+    let mutable totalDots = 0
     let walls = scene.AddLayer()
     let lines = maze.Split('\n')
     let tiles =
@@ -211,6 +213,7 @@ _______7./7 |      ! /7./_______
             line.ToCharArray() |> Array.mapi (fun x item ->
                 let tile = toTile item |> toImage
                 set tile (x * 8, y * 8)
+                if isEdible item then totalDots <- totalDots + 1
                 if isWall item 
                 then walls.Contents.Add tile |> ignore
                 else scene.Contents.Add tile |> ignore
@@ -412,13 +415,21 @@ _______7./7 |      ! /7./_______
             if contains (tiles.[ty].[tx]) then
                 score <- score + 10
                 remove (tiles.[ty].[tx])
+                totalDots <- totalDots - 1
         if tileAt tx ty = 'o' then
             if contains (tiles.[ty].[tx]) then
                 score <- score + 50
                 powerCount <- 500
                 bonus <- 0
+                totalDots <- totalDots - 1
             remove (tiles.[ty].[tx])
         set !pacman (!x,!y)
+        if totalDots = 0 then
+            let text = createText "LEVEL COMPLETED"
+            set text (7*8, 15*8)
+            add text
+            finished <- true
+
 
     let updatePower () =
         if powerCount > 0 then
