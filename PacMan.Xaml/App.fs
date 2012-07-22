@@ -200,9 +200,21 @@ type GameControl () as control =
             member this.IsRight = pressed right
         }
     let game = Game(scene, input)
-    do  control.Loaded.Subscribe(fun _ ->
-        run control (1.0/50.0) game.Update |> ignore
-        ) |> ignore
+    let start _ = run control (1.0/50.0) game.Update |> ignore
+#if SILVERLIGHT
+    do  if Application.Current.IsRunningOutOfBrowser then start()
+        else
+            let prompt = scene.CreateText("Click To Start")
+            prompt.Move(6.0*8.0, 15.0*8.0)
+            scene.Contents.Add(prompt)
+            async { 
+                do! control.MouseLeftButtonDown |> Async.AwaitEvent |> Async.Ignore
+                scene.Contents.Remove(prompt)
+                start ()
+            } |> Async.StartImmediate
+#else
+    do  control.Loaded.Subscribe start |> ignore 
+#endif
     override control.MeasureOverride(size) =
         let mutable scale = 1.0
         while (width * scale) < size.Width && 
