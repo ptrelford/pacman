@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Package xmlns="http://schemas.microsoft.com/appx/2010/manifest">
-  <Identity Name="cb9232b9-1012-4323-8bf8-778c18466ccb" Publisher="CN=trelford.com" Version="1.0.0.0" />
+  <Identity Name="cb9232b9-1012-4323-8bf8-778c18466ccb" Publisher="CN=Phil" Version="1.0.0.0" />
   <Properties>
     <DisplayName>PacMan</DisplayName>
     <PublisherDisplayName>Phil Trelford</PublisherDisplayName>
